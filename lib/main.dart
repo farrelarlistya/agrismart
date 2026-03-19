@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/login_page.dart';
+import 'views/widget_tree.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +13,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'AgriSmart',
-      home: LoginPage(),
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.green,
+      ),
+      home: const WidgetTree(),
     );
   }
 }

@@ -1,4 +1,4 @@
-import 'package:agrismart/widgets/text_field_widget.dart';
+import 'package:agrismart/views/widgets/text_field_widget.dart';
 import 'package:flutter/material.dart';
 
 class RegisterPage extends StatelessWidget {
