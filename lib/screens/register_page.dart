@@ -1,3 +1,4 @@
+import 'package:agrismart/widgets/text_field_widget.dart';
 import 'package:flutter/material.dart';
 
 class RegisterPage extends StatelessWidget {
@@ -16,9 +17,7 @@ class RegisterPage extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             const SizedBox(height: 20),
 
             const Center(
@@ -26,10 +25,7 @@ class RegisterPage extends StatelessWidget {
                 children: [
                   Text(
                     "Daftar Akun AgriSmart",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
 
                   SizedBox(height: 8),
@@ -45,17 +41,30 @@ class RegisterPage extends StatelessWidget {
 
             const SizedBox(height: 30),
 
-            buildTextField("Nama Lengkap", "Masukkan nama lengkap Anda"),
+            TextFieldWidget(
+              label: "Nama Lengkap",
+              hint: "Masukkan nama lengkap Anda",
+            ),
 
-            buildTextField("Email", "contoh@email.com"),
+            TextFieldWidget(
+              label: "Email",
+              hint: "contoh@email.com",
+            ),
 
-            buildTextField("Kata Sandi", "Minimal 8 karakter", obscure: true),
+            TextFieldWidget(
+              label: "Kata Sandi",
+              hint: "Minimal 8 karakter",
+              obscure: true,
+            ),
 
-            buildTextField("Nomor HP", "08xxxxxxxxxx"),
+            TextFieldWidget(
+              label: "Nomor HP",
+              hint: "08xxxxxxxxxx",
+            ),
 
-            buildTextField(
-              "Alamat Lengkap",
-              "Jalan, Kelurahan, Kecamatan,\nKota/Kabupaten",
+            TextFieldWidget(
+              label: "Alamat Lengkap",
+              hint: "Jalan, Kelurahan, Kecamatan,\nKota/Kabupaten",
               maxLines: 3,
             ),
 
@@ -96,44 +105,14 @@ class RegisterPage extends StatelessWidget {
                           color: Colors.green,
                           fontWeight: FontWeight.bold,
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
               ),
-            )
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget buildTextField(String label, String hint,
-      {bool obscure = false, int maxLines = 1}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          Text(label),
-
-          const SizedBox(height: 6),
-
-          TextField(
-            obscureText: obscure,
-            maxLines: maxLines,
-            decoration: InputDecoration(
-              hintText: hint,
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.all(14),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
