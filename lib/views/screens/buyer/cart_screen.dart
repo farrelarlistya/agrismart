@@ -1,48 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/price_formatter.dart';
-import '../../../data/dummy_data.dart';
-import '../../../models/product.dart';
+import '../../../models/cart_item.dart';
+import '../../../providers/cart_provider.dart';
 import '../../widgets/agrismart_app_bar.dart';
 import '../../widgets/primary_button.dart';
 import 'checkout_screen.dart';
 
-class CartScreen extends StatefulWidget {
+class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
-  @override
-  State<CartScreen> createState() => _CartScreenState();
-}
-
-class _CartScreenState extends State<CartScreen> {
-  bool _selectAll = true;
-  final List<Map<String, dynamic>> _cartItems = [
-    {'product': AppData.products[9], 'quantity': 1, 'selected': true},
-  ];
-
-  double get _subtotal {
-    double total = 0;
-    for (final item in _cartItems) {
-      if (item['selected'] == true) {
-        final product = item['product'] as Product;
-        total += product.price * (item['quantity'] as int);
-      }
-    }
-    return total;
-  }
-
-  int get _selectedCount => _cartItems.where((i) => i['selected'] == true).length;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AgriSmartAppBar(title: 'Keranjang Saya', showBack: true, actions: [
-        TextButton(onPressed: () {}, child: const Text('Hapus', style: TextStyle(color: AppColors.red, fontSize: 13))),
+        Consumer<CartProvider>(
+          builder: (context, cart, _) => TextButton(
+            onPressed: cart.itemCount > 0 ? () => cart.clearCart() : null,
+            child: const Text('Hapus', style: TextStyle(color: AppColors.red, fontSize: 13)),
+          ),
+        ),
       ]),
-      body: Column(children: [
-        Expanded(child: _cartItems.isEmpty ? _buildEmpty() : _buildCartList()),
-        _buildBottomBar(),
-      ]),
+      body: Consumer<CartProvider>(
+        builder: (context, cart, _) => Column(children: [
+          Expanded(child: cart.items.isEmpty ? _buildEmpty() : _buildCartList(context, cart)),
+          _buildBottomBar(context, cart),
+        ]),
+      ),
     );
   }
 
@@ -56,89 +42,98 @@ class _CartScreenState extends State<CartScreen> {
     ]));
   }
 
-  Widget _buildCartList() {
+  Widget _buildCartList(BuildContext context, CartProvider cart) {
     return ListView(padding: const EdgeInsets.all(16), children: [
+      // Select all checkbox
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(AppDimens.radiusM)),
         child: Row(children: [
-          SizedBox(width: 20, height: 20, child: Checkbox(value: _selectAll, onChanged: (v) { setState(() { _selectAll = v ?? false; for (final item in _cartItems) { item['selected'] = _selectAll; } }); }, activeColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)))),
+          SizedBox(width: 20, height: 20, child: Checkbox(
+            value: cart.allSelected,
+            onChanged: (v) => cart.selectAll(v ?? false),
+            activeColor: AppColors.primary,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          )),
           const SizedBox(width: 10),
           const Text('Pilih Semua', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
         ]),
       ),
       const SizedBox(height: 12),
+      // Cart items grouped
       Container(
         decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(AppDimens.radiusL), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))]),
         child: Column(children: [
           Padding(padding: const EdgeInsets.all(14), child: Row(children: [
             const Icon(Icons.store, size: 16, color: AppColors.textPrimary), const SizedBox(width: 8),
-            const Text('AgriFresh Bandung', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-            const Spacer(), const Icon(Icons.chevron_right, size: 18, color: AppColors.grey),
+            Expanded(child: Text(cart.items.isNotEmpty ? cart.items.first.product.seller : '', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
           ])),
           const Divider(height: 1, color: AppColors.divider),
-          ..._cartItems.map((item) => _CartItemTile(item: item, onQuantityChanged: (q) { setState(() => item['quantity'] = q); }, onSelectionChanged: (v) { setState(() { item['selected'] = v; _selectAll = _cartItems.every((i) => i['selected'] == true); }); })),
-        ]),
-      ),
-      const SizedBox(height: 12),
-      Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(AppDimens.radiusL)),
-        child: Row(children: [
-          const Icon(Icons.local_shipping_outlined, color: AppColors.primary, size: 18), const SizedBox(width: 10),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-            Text('AgrExpress (Same Day)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
-            Text('Rp 15.000', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-          ]),
-          const Spacer(), const Icon(Icons.chevron_right, size: 18, color: AppColors.grey),
+          ...cart.items.map((item) => _CartItemTile(
+            item: item,
+            onQuantityChanged: (q) => cart.updateQuantity(item.product.id, q),
+            onSelectionChanged: (_) => cart.toggleSelection(item.product.id),
+            onRemove: () => cart.removeFromCart(item.product.id),
+          )),
         ]),
       ),
     ]);
   }
 
-  Widget _buildBottomBar() {
+  Widget _buildBottomBar(BuildContext context, CartProvider cart) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: BoxDecoration(color: AppColors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, -4))]),
       child: Row(children: [
         Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-          Text('Total ($_selectedCount item)', style: AppTextStyles.bodySmall),
-          Text(formatPrice(_subtotal), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
+          Text('Total (${cart.selectedCount} item)', style: AppTextStyles.bodySmall),
+          Text(formatPrice(cart.subtotal), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
         ]),
         const SizedBox(width: 16),
-        Expanded(child: PrimaryButton(text: 'Checkout ($_selectedCount item) →', onPressed: _selectedCount > 0 ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckoutScreen())) : null, height: 46)),
+        Expanded(child: PrimaryButton(
+          text: 'Checkout (${cart.selectedCount} item) →',
+          onPressed: cart.selectedCount > 0 ? () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckoutScreen()));
+          } : null,
+          height: 46,
+        )),
       ]),
     );
   }
 }
 
 class _CartItemTile extends StatelessWidget {
-  final Map<String, dynamic> item;
+  final CartItem item;
   final Function(int) onQuantityChanged;
   final Function(bool) onSelectionChanged;
-  const _CartItemTile({required this.item, required this.onQuantityChanged, required this.onSelectionChanged});
+  final VoidCallback onRemove;
+  const _CartItemTile({required this.item, required this.onQuantityChanged, required this.onSelectionChanged, required this.onRemove});
 
   @override
   Widget build(BuildContext context) {
-    final product = item['product'] as Product;
-    final qty = item['quantity'] as int;
-    final selected = item['selected'] as bool;
-    return Padding(padding: const EdgeInsets.all(14), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      SizedBox(width: 20, height: 20, child: Checkbox(value: selected, onChanged: (v) => onSelectionChanged(v ?? false), activeColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)))),
-      const SizedBox(width: 10),
-      ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset(product.imageUrl, width: 64, height: 64, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(width: 64, height: 64, decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.eco, color: AppColors.primary, size: 32)))),
-      const SizedBox(width: 12),
-      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(product.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-        Text(product.seller, style: AppTextStyles.bodySmall),
-        const SizedBox(height: 8),
-        Row(children: [
-          Text(formatPrice(product.price), style: AppTextStyles.priceSmall),
-          const Spacer(),
-          _QtyControl(quantity: qty, onChanged: onQuantityChanged),
-        ]),
+    final product = item.product;
+    return Dismissible(
+      key: Key(product.id),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) => onRemove(),
+      background: Container(color: AppColors.red, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 20), child: const Icon(Icons.delete, color: Colors.white)),
+      child: Padding(padding: const EdgeInsets.all(14), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        SizedBox(width: 20, height: 20, child: Checkbox(value: item.selected, onChanged: (v) => onSelectionChanged(v ?? false), activeColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)))),
+        const SizedBox(width: 10),
+        ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset(product.imageUrl, width: 64, height: 64, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(width: 64, height: 64, decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.eco, color: AppColors.primary, size: 32)))),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(product.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+          Text(product.seller, style: AppTextStyles.bodySmall),
+          const SizedBox(height: 8),
+          Row(children: [
+            Text(formatPrice(product.price), style: AppTextStyles.priceSmall),
+            const Spacer(),
+            _QtyControl(quantity: item.quantity, onChanged: onQuantityChanged),
+          ]),
+        ])),
       ])),
-    ]));
+    );
   }
 }
 

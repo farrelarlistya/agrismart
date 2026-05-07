@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../providers/cart_provider.dart';
 import '../../widgets/agri_bottom_nav_bar.dart';
 import 'home_screen.dart';
 import 'category_screen.dart';
 import 'orders_screen.dart';
 import 'favorite_screen.dart';
 import 'cart_screen.dart';
+import 'chat_list_screen.dart';
 import 'drawer_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -17,7 +20,6 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  int _cartCount = 2;
 
   final List<Widget> _screens = const [
     HomeScreen(),
@@ -73,50 +75,56 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
       actions: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            IconButton(
-              icon: const Icon(
-                Icons.shopping_cart_outlined,
-                color: AppColors.textPrimary,
+        // Cart icon with real-time badge from CartProvider
+        Consumer<CartProvider>(
+          builder: (context, cart, _) => Stack(
+            clipBehavior: Clip.none,
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.shopping_cart_outlined,
+                  color: AppColors.textPrimary,
+                ),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CartScreen()),
+                ),
               ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CartScreen()),
-              ),
-            ),
-            if (_cartCount > 0)
-              Positioned(
-                top: 6,
-                right: 6,
-                child: Container(
-                  width: 16,
-                  height: 16,
-                  decoration: const BoxDecoration(
-                    color: AppColors.red,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$_cartCount',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
+              if (cart.itemCount > 0)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: const BoxDecoration(
+                      color: AppColors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${cart.itemCount}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
         IconButton(
           icon: const Icon(
-            Icons.notifications_outlined,
+            Icons.chat_bubble_outline,
             color: AppColors.textPrimary,
           ),
-          onPressed: () {},
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ChatListScreen()),
+          ),
         ),
       ],
       bottom: PreferredSize(

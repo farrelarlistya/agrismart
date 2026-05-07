@@ -25,10 +25,54 @@ class _OrdersScreenState extends State<OrdersScreen> with SingleTickerProviderSt
   }
 
   final List<Map<String, dynamic>> _orders = const [
-    {'id': '#INV-2024001', 'date': '24 Okt 2024', 'status': 'Menunggu Pengiriman', 'productName': 'Ceri Organik', 'seller': 'AgriFresh Bandung', 'quantity': 1, 'price': 25000, 'tab': 0},
-    {'id': '#INV-2024002', 'date': '16 Okt 2024', 'status': 'Dikirim', 'productName': 'Tomat Ceri', 'seller': 'AgriFresh Bandung', 'quantity': 2, 'price': 40000, 'tab': 1},
-    {'id': '#INV-2024005', 'date': '12 Okt 2024', 'status': 'Selesai', 'productName': 'Ceri Organik', 'seller': 'AgriFresh Bandung', 'quantity': 2, 'price': 75000, 'tab': 2},
-    {'id': '#INV-2024006', 'date': '10 Okt 2024', 'status': 'Selesai', 'productName': 'Melon Super', 'seller': 'Kebun Makmur', 'quantity': 1, 'price': 32500, 'tab': 2},
+    {
+      'id': '#INV-2024001',
+      'date': '24 Okt 2024',
+      'status': 'Menunggu Pengiriman',
+      'productName': 'Ceri Organik',
+      'productImage': 'assets/images/cherry.png',
+      'seller': 'AgriFresh Bandung',
+      'quantity': 1,
+      'unit': 'kg',
+      'price': 25000,
+      'tab': 0,
+    },
+    {
+      'id': '#INV-2024002',
+      'date': '16 Okt 2024',
+      'status': 'Dikirim',
+      'productName': 'Tomat Ceri',
+      'productImage': 'assets/images/cherry_tomato.png',
+      'seller': 'AgriFresh Bandung',
+      'quantity': 2,
+      'unit': 'kg',
+      'price': 40000,
+      'tab': 1,
+    },
+    {
+      'id': '#INV-2024005',
+      'date': '12 Okt 2024',
+      'status': 'Selesai',
+      'productName': 'Ceri Organik',
+      'productImage': 'assets/images/cherry.png',
+      'seller': 'AgriFresh Bandung',
+      'quantity': 2,
+      'unit': 'kg',
+      'price': 75000,
+      'tab': 2,
+    },
+    {
+      'id': '#INV-2024006',
+      'date': '10 Okt 2024',
+      'status': 'Selesai',
+      'productName': 'Melon Super',
+      'productImage': 'assets/images/melon.png',
+      'seller': 'Kebun Makmur',
+      'quantity': 1,
+      'unit': 'buah',
+      'price': 32500,
+      'tab': 2,
+    },
   ];
 
   List<Map<String, dynamic>> _getOrdersByTab(int tab) {
@@ -53,10 +97,8 @@ class _OrdersScreenState extends State<OrdersScreen> with SingleTickerProviderSt
     return Container(
       color: AppColors.white,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-      child: Row(children: [
-        const Text('Pesanan Saya', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-        const Spacer(),
-        Container(width: 32, height: 32, decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.filter_list, color: AppColors.primary, size: 18)),
+      child: const Row(children: [
+        Text('Pesanan Saya', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
       ]),
     );
   }
@@ -92,28 +134,52 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String productImage = order['productImage'] as String? ?? '';
+    final String unit = order['unit'] as String? ?? 'pcs';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(AppDimens.radiusL), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))]),
       child: Column(children: [
+        // Order header: invoice + status badge
         Padding(padding: const EdgeInsets.all(14), child: Row(children: [
           Text(order['id'] as String, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           const Spacer(),
           StatusBadge(status: order['status'] as String),
         ])),
         const Divider(height: 1, color: AppColors.divider),
+        // Product info with image
         Padding(padding: const EdgeInsets.all(14), child: Row(children: [
-          Container(width: 50, height: 50, decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.eco, color: AppColors.primary, size: 26)),
+          // Product image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              productImage,
+              width: 56,
+              height: 56,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.eco, color: AppColors.primary, size: 26),
+              ),
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // Product name
             Text(order['productName'] as String, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
             const SizedBox(height: 2),
+            // Seller name
             Text(order['seller'] as String, style: AppTextStyles.bodySmall),
             const SizedBox(height: 2),
-            Text('${order['quantity']} x ${formatPrice((order['price'] as int).toDouble())}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            // Quantity & unit
+            Text('${order['quantity']} $unit × ${formatPrice((order['price'] as int).toDouble())}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
           ])),
         ])),
         const Divider(height: 1, color: AppColors.divider),
+        // Footer: total + action button
         Padding(padding: const EdgeInsets.all(14), child: Row(children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Text('Total Pesanan', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),

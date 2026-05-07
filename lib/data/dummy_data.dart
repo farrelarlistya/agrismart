@@ -17,6 +17,7 @@ class AppData {
       description:
           'Tomat cherry premium pilihan yang ditanam dengan metode hidroponik tanpa pestisida kimia. Memiliki rasa manis alami yang kuat dan tekstur segar.',
       isOrganic: true,
+      location: 'Bandung, Jawa Barat',
     ),
     Product(
       id: '2',
@@ -24,11 +25,12 @@ class AppData {
       seller: 'Tani Maju',
       price: 15000,
       imageUrl: 'assets/images/broccoli.png',
-      category: 'Sayuran',
+      category: 'Hasil Pertanian',
       unit: 'kg',
       rating: 4.5,
       reviewCount: 89,
       isOrganic: true,
+      location: 'Lembang, Jawa Barat',
     ),
     Product(
       id: '3',
@@ -36,10 +38,11 @@ class AppData {
       seller: 'Kebun Sehat',
       price: 12000,
       imageUrl: 'assets/images/beans.png',
-      category: 'Sayuran',
+      category: 'Hasil Pertanian',
       unit: 'kg',
       rating: 4.3,
       reviewCount: 56,
+      location: 'Garut, Jawa Barat',
     ),
     Product(
       id: '4',
@@ -47,12 +50,13 @@ class AppData {
       seller: 'AgriFresh Bandung',
       price: 8000,
       imageUrl: 'assets/images/carrot.png',
-      category: 'Sayuran',
+      category: 'Hasil Pertanian',
       unit: 'kg',
       rating: 4.6,
       reviewCount: 210,
       isOrganic: true,
       isPremium: true,
+      location: 'Bandung, Jawa Barat',
     ),
     Product(
       id: '5',
@@ -64,6 +68,7 @@ class AppData {
       unit: 'kg',
       rating: 4.7,
       reviewCount: 143,
+      location: 'Cianjur, Jawa Barat',
     ),
     Product(
       id: '6',
@@ -76,6 +81,7 @@ class AppData {
       rating: 4.9,
       reviewCount: 312,
       isPremium: true,
+      location: 'Sumbawa, NTB',
     ),
     Product(
       id: '7',
@@ -83,10 +89,11 @@ class AppData {
       seller: 'Kebun Nusantara',
       price: 32000,
       imageUrl: 'assets/images/banana.png',
-      category: 'Buah',
+      category: 'Hasil Pertanian',
       unit: 'sisir',
       rating: 4.4,
       reviewCount: 78,
+      location: 'Lampung, Sumatera',
     ),
     Product(
       id: '8',
@@ -94,11 +101,12 @@ class AppData {
       seller: 'Sawah Organik',
       price: 45000,
       imageUrl: 'assets/images/rice.png',
-      category: 'Beras & Biji',
+      category: 'Produk Olahan',
       unit: 'kg',
       rating: 4.7,
       reviewCount: 267,
       isOrganic: true,
+      location: 'Subang, Jawa Barat',
     ),
     Product(
       id: '9',
@@ -106,10 +114,11 @@ class AppData {
       seller: 'Kebun Makmur',
       price: 35000,
       imageUrl: 'assets/images/melon.png',
-      category: 'Buah',
+      category: 'Hasil Pertanian',
       unit: 'buah',
       rating: 4.5,
       reviewCount: 91,
+      location: 'Blitar, Jawa Timur',
     ),
     Product(
       id: '10',
@@ -117,22 +126,21 @@ class AppData {
       seller: 'AgriFresh Bandung',
       price: 25000,
       imageUrl: 'assets/images/cherry.png',
-      category: 'Buah',
+      category: 'Hasil Pertanian',
       unit: 'kg',
       rating: 4.6,
       reviewCount: 105,
       isOrganic: true,
+      location: 'Bandung, Jawa Barat',
     ),
   ];
 
   static const List<String> categories = [
     'Semua',
     'Hasil Pertanian',
-    'Sayuran',
-    'Buah',
     'Produk Olahan',
-    'Beras & Biji',
-    'Gas & Minyak',
+    'Sarana Produksi',
+    'Alat & Mesin',
   ];
 
   static const List<Map<String, dynamic>> orders = [

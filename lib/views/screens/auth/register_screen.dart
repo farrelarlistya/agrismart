@@ -199,7 +199,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             color: AppColors.textSecondary,
                           ),
                           children: [
-                            TextSpan(text: 'Mulai perjalanan bisnisku dengan '),
+                            TextSpan(text: 'Saya menyetujui '),
                             TextSpan(
                               text: 'Syarat & Ketentuan',
                               style: TextStyle(
@@ -207,7 +207,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            TextSpan(text: ' yang berlaku di AgriSmart.'),
+                            TextSpan(text: ' serta '),
+                            TextSpan(
+                              text: 'Kebijakan Privasi',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            TextSpan(text: ' yang berlaku sebagai pengguna AgriSmart.'),
                           ],
                         ),
                       ),

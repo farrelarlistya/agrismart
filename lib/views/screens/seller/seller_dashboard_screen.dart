@@ -23,7 +23,7 @@ class SellerDashboardScreen extends StatelessWidget {
       ]),
       const Spacer(),
       Switch(value: true, onChanged: (_) {}, activeColor: AppColors.primary),
-      IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.textPrimary, size: 22), onPressed: () {}),
+      IconButton(icon: const Icon(Icons.chat_bubble_outline, color: AppColors.textPrimary, size: 22), onPressed: () {}),
     ]));
   }
 

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/dummy_data.dart';
 import '../../../models/product.dart';
+import '../../../providers/cart_provider.dart';
+import '../../../providers/favorite_provider.dart';
 import '../../widgets/product_card.dart';
 import 'product_detail_screen.dart';
 
@@ -14,6 +17,13 @@ class CategoryScreen extends StatefulWidget {
 class _CategoryScreenState extends State<CategoryScreen> {
   String _selectedCategory = 'Semua';
 
+  static const List<Map<String, dynamic>> _mainCategories = [
+    {'icon': Icons.grass, 'label': 'Hasil Pertanian'},
+    {'icon': Icons.eco, 'label': 'Produk Olahan'},
+    {'icon': Icons.science_outlined, 'label': 'Sarana Produksi'},
+    {'icon': Icons.agriculture, 'label': 'Alat & Mesin'},
+  ];
+
   List<Product> get _filteredProducts {
     if (_selectedCategory == 'Semua') return AppData.products;
     return AppData.products.where((p) => p.category == _selectedCategory).toList();
@@ -23,99 +33,65 @@ class _CategoryScreenState extends State<CategoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          _buildHeader(),
-          _buildCategoryTabs(),
-          Expanded(child: _buildProductGrid()),
-        ],
-      ),
+      body: Column(children: [
+        _buildHeader(),
+        _buildCategoryTabs(),
+        Expanded(child: _buildProductGrid()),
+      ]),
     );
   }
 
   Widget _buildHeader() {
     return Container(
       color: AppColors.white,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      child: Row(
-        children: [
-          const Text('Kategori', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(20)),
-            child: Text('${_filteredProducts.length} Produk', style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
-          ),
-          const SizedBox(width: 8),
-          const Icon(Icons.search, color: AppColors.textPrimary, size: 22),
-        ],
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      child: Row(children: [
+        const Text('Kategori', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        const Spacer(),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(20)),
+          child: Text('${_filteredProducts.length} Produk', style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
+        ),
+        const SizedBox(width: 8),
+        const Icon(Icons.search, color: AppColors.textPrimary, size: 22),
+      ]),
     );
   }
 
   Widget _buildCategoryTabs() {
     return Container(
       color: AppColors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              children: AppData.categories.map((c) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
-                  onTap: () => setState(() => _selectedCategory = c),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+      child: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: _mainCategories.map((cat) {
+              final label = cat['label'] as String;
+              final isSelected = _selectedCategory == label;
+              return GestureDetector(
+                onTap: () => setState(() {
+                  _selectedCategory = _selectedCategory == label ? 'Semua' : label;
+                }),
+                child: Column(children: [
+                  Container(
+                    width: 54, height: 54,
                     decoration: BoxDecoration(
-                      color: _selectedCategory == c ? AppColors.primary : AppColors.secondary,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: _selectedCategory == c ? AppColors.primary : AppColors.divider),
+                      color: isSelected ? AppColors.primary : AppColors.greenBadge,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(c, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _selectedCategory == c ? Colors.white : AppColors.textSecondary)),
+                    child: Icon(cat['icon'] as IconData, color: isSelected ? Colors.white : AppColors.primary, size: 26),
                   ),
-                ),
-              )).toList(),
-            ),
+                  const SizedBox(height: 4),
+                  Text(label, textAlign: TextAlign.center, style: TextStyle(fontSize: 10, fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500, color: isSelected ? AppColors.primary : AppColors.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis),
+                ]),
+              );
+            }).toList(),
           ),
-          if (_selectedCategory == 'Semua') _buildCategoryGrid(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryGrid() {
-    final cats = [
-      {'icon': Icons.grass, 'label': 'Hasil Pertanian'},
-      {'icon': Icons.eco, 'label': 'Sayuran'},
-      {'icon': Icons.apple, 'label': 'Buah'},
-      {'icon': Icons.kitchen, 'label': 'Produk Olahan'},
-    ];
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.85),
-        itemCount: cats.length,
-        itemBuilder: (context, i) {
-          final c = cats[i];
-          return GestureDetector(
-            onTap: () => setState(() => _selectedCategory = c['label'] as String),
-            child: Column(children: [
-              Container(
-                height: 54, width: 54,
-                decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(12)),
-                child: Icon(c['icon'] as IconData, color: AppColors.primary, size: 26),
-              ),
-              const SizedBox(height: 4),
-              Text(c['label'] as String, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis),
-            ]),
-          );
-        },
-      ),
+        ),
+        const Divider(height: 1, color: AppColors.divider),
+      ]),
     );
   }
 
@@ -123,9 +99,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final products = _filteredProducts;
     if (products.isEmpty) {
       return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(Icons.search_off, size: 60, color: AppColors.grey.withOpacity(0.5)),
+        Icon(Icons.inventory_2_outlined, size: 60, color: AppColors.grey.withOpacity(0.4)),
         const SizedBox(height: 12),
-        const Text('Produk tidak ditemukan', style: TextStyle(color: AppColors.grey)),
+        const Text('Belum ada produk\ndi kategori ini', textAlign: TextAlign.center, style: TextStyle(color: AppColors.grey, fontSize: 13)),
       ]));
     }
     return GridView.builder(
@@ -134,10 +110,17 @@ class _CategoryScreenState extends State<CategoryScreen> {
       itemCount: products.length,
       itemBuilder: (context, index) {
         final product = products[index];
-        return ProductCard(
-          product: product,
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailScreen(product: product))),
-          onAddToCart: () {},
+        return Consumer<FavoriteProvider>(
+          builder: (context, favProv, _) => ProductCard(
+            product: product,
+            isFavorite: favProv.isFavorite(product.id),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailScreen(product: product))),
+            onAddToCart: () {
+              context.read<CartProvider>().addToCart(product);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${product.name} ditambahkan ke keranjang'), backgroundColor: AppColors.primary, duration: const Duration(seconds: 1)));
+            },
+            onToggleFavorite: () => favProv.toggleFavorite(product.id),
+          ),
         );
       },
     );
