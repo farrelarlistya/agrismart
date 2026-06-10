@@ -1,3 +1,4 @@
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
@@ -7,8 +8,30 @@ import '../../widgets/agrismart_app_bar.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/primary_button.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Future<void> _pickAndUploadImage(BuildContext context, UserProvider userProv) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      final success = await userProv.uploadAvatar(pickedFile.path);
+      if (success) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Foto profil berhasil diubah')));
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal mengubah foto profil', style: TextStyle(color: Colors.white)), backgroundColor: Colors.red));
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +47,12 @@ class ProfileScreen extends StatelessWidget {
             Container(margin: const EdgeInsets.all(16), padding: const EdgeInsets.all(20), decoration: BoxDecoration(gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1E8B4F), Color(0xFF2ECC71)]), borderRadius: BorderRadius.circular(AppDimens.radiusXL)),
               child: Column(children: [
                 Stack(alignment: Alignment.bottomRight, children: [
-                  Container(width: 80, height: 80, decoration: BoxDecoration(color: Colors.white.withOpacity(0.3), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
-                    child: Center(child: Text(user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: Colors.white)))),
-                  Container(width: 24, height: 24, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle), child: const Icon(Icons.edit, size: 14, color: AppColors.primary)),
+                  Container(width: 80, height: 80, decoration: BoxDecoration(color: Colors.white.withOpacity(0.3), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2), image: user.avatarUrl != null ? DecorationImage(image: NetworkImage(user.avatarUrl!), fit: BoxFit.cover) : null),
+                    child: user.avatarUrl == null ? Center(child: Text(user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: Colors.white))) : null),
+                  GestureDetector(
+                    onTap: () => _pickAndUploadImage(context, userProv),
+                    child: Container(width: 24, height: 24, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle), child: userProv.isLoading ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.edit, size: 14, color: AppColors.primary)),
+                  ),
                 ]),
                 const SizedBox(height: 12),
                 Text(user.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),

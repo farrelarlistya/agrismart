@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../data/dummy_data.dart';
 import '../../../models/product.dart';
 import '../../../providers/cart_provider.dart';
 import '../../../providers/favorite_provider.dart';
+import '../../../providers/product_provider.dart';
 import '../../widgets/product_card.dart';
 import 'product_detail_screen.dart';
 
 class CategoryScreen extends StatefulWidget {
-  const CategoryScreen({super.key});
+  final String? initialCategory;
+  const CategoryScreen({super.key, this.initialCategory});
   @override
   State<CategoryScreen> createState() => _CategoryScreenState();
 }
@@ -24,24 +25,33 @@ class _CategoryScreenState extends State<CategoryScreen> {
     {'icon': Icons.agriculture, 'label': 'Alat & Mesin'},
   ];
 
-  List<Product> get _filteredProducts {
-    if (_selectedCategory == 'Semua') return AppData.products;
-    return AppData.products.where((p) => p.category == _selectedCategory).toList();
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialCategory != null) {
+      _selectedCategory = widget.initialCategory!;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProductProvider>().fetchProducts();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final productProvider = context.watch<ProductProvider>();
+    final filteredProducts = productProvider.getByCategory(_selectedCategory);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(children: [
-        _buildHeader(),
+        _buildHeader(filteredProducts.length),
         _buildCategoryTabs(),
-        Expanded(child: _buildProductGrid()),
+        Expanded(child: _buildProductGrid(filteredProducts)),
       ]),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(int count) {
     return Container(
       color: AppColors.white,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
@@ -51,7 +61,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(20)),
-          child: Text('${_filteredProducts.length} Produk', style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
+          child: Text('$count Produk', style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
         ),
         const SizedBox(width: 8),
         const Icon(Icons.search, color: AppColors.textPrimary, size: 22),
@@ -95,8 +105,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
     );
   }
 
-  Widget _buildProductGrid() {
-    final products = _filteredProducts;
+  Widget _buildProductGrid(List<Product> products) {
+    if (context.watch<ProductProvider>().isLoading) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+    }
     if (products.isEmpty) {
       return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         Icon(Icons.inventory_2_outlined, size: 60, color: AppColors.grey.withOpacity(0.4)),

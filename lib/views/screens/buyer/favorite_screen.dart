@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../data/dummy_data.dart';
 import '../../../providers/cart_provider.dart';
 import '../../../providers/favorite_provider.dart';
+import '../../../providers/product_provider.dart';
 import '../../widgets/product_card.dart';
 import 'product_detail_screen.dart';
 
@@ -15,9 +15,9 @@ class FavoriteScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(children: [
-        Consumer<FavoriteProvider>(
-          builder: (context, favProv, _) {
-            final favorites = AppData.products.where((p) => favProv.isFavorite(p.id)).toList();
+        Consumer2<FavoriteProvider, ProductProvider>(
+          builder: (context, favProv, productProv, _) {
+            final favorites = productProv.products.where((p) => favProv.isFavorite(p.id)).toList();
             return Container(
               color: AppColors.white,
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
@@ -30,9 +30,9 @@ class FavoriteScreen extends StatelessWidget {
           },
         ),
         Expanded(
-          child: Consumer<FavoriteProvider>(
-            builder: (context, favProv, _) {
-              final favorites = AppData.products.where((p) => favProv.isFavorite(p.id)).toList();
+          child: Consumer2<FavoriteProvider, ProductProvider>(
+            builder: (context, favProv, productProv, _) {
+              final favorites = productProv.products.where((p) => favProv.isFavorite(p.id)).toList();
               if (favorites.isEmpty) {
                 return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Icon(Icons.favorite_border, size: 60, color: AppColors.grey.withOpacity(0.5)),

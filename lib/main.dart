@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/favorite_provider.dart';
+import 'providers/product_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/address_provider.dart';
 import 'providers/search_provider.dart';
+import 'providers/store_provider.dart';
 import 'views/screens/auth/login_screen.dart';
 
 void main() {
@@ -28,9 +30,11 @@ class AgriSmartApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => FavoriteProvider()),
+        ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => AddressProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
+        ChangeNotifierProvider(create: (_) => StoreProvider()),
       ],
       child: MaterialApp(
         title: 'AgriSmart',

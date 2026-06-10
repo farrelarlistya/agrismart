@@ -1,9 +1,12 @@
 import 'package:flutter/foundation.dart';
-import '../data/dummy_data.dart';
+import '../data/api_service.dart';
+import '../core/constants/api_constants.dart';
 import '../models/product.dart';
 
-/// Manages product search state with instant filtering.
+/// Manages product search state with API-backed filtering.
 class SearchProvider extends ChangeNotifier {
+  final ApiService _api = ApiService();
+
   String _query = '';
   List<Product> _results = [];
   bool _isSearching = false;
@@ -23,18 +26,23 @@ class SearchProvider extends ChangeNotifier {
     _isSearching = true;
     notifyListeners();
 
-    // Simulate a short delay for realistic feel
-    Future.delayed(const Duration(milliseconds: 200), () {
-      final lowerQuery = query.toLowerCase();
-      _results = AppData.products.where((p) {
-        return p.name.toLowerCase().contains(lowerQuery) ||
-            p.seller.toLowerCase().contains(lowerQuery) ||
-            p.category.toLowerCase().contains(lowerQuery) ||
-            p.location.toLowerCase().contains(lowerQuery);
-      }).toList();
-      _isSearching = false;
-      notifyListeners();
-    });
+    _searchFromApi(query);
+  }
+
+  Future<void> _searchFromApi(String query) async {
+    try {
+      final response = await _api.get(
+        ApiConstants.products,
+        queryParams: {'search': query},
+      );
+      final List data = response['data'] as List? ?? [];
+      _results = data.map((json) => Product.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('Search error: $e');
+      _results = [];
+    }
+    _isSearching = false;
+    notifyListeners();
   }
 
   void clearSearch() {

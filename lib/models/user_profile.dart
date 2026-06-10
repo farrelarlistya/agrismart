@@ -14,6 +14,28 @@ class UserProfile {
     this.avatarUrl,
   });
 
+  /// Creates a UserProfile from a JSON map (API response).
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    return UserProfile(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      phone: json['phone'] as String? ?? '',
+      avatarUrl: json['avatar_url'] as String?,
+    );
+  }
+
+  /// Converts this UserProfile to a JSON map.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'avatar_url': avatarUrl,
+    };
+  }
+
   UserProfile copyWith({
     String? name,
     String? email,

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../data/dummy_data.dart';
 import '../../../models/chat_message.dart';
+import '../../../providers/product_provider.dart';
 import 'product_detail_screen.dart';
 
 /// Chat detail screen with WhatsApp/Telegram-style conversation UI.
@@ -234,14 +235,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   void _navigateToProduct() {
     if (widget.productName == null) return;
-    // Find the matching product from the data source
-    try {
-      final product = AppData.products.firstWhere(
-        (p) => p.name == widget.productName,
-      );
+    // Find the matching product from the provider
+    final productProvider = context.read<ProductProvider>();
+    final product = productProvider.products.where(
+      (p) => p.name == widget.productName,
+    ).firstOrNull;
+    if (product != null) {
       Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailScreen(product: product)));
-    } catch (_) {
-      // Product not found in data — show a snackbar
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Produk tidak ditemukan'), backgroundColor: AppColors.grey),
       );
@@ -488,49 +489,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   List<ChatMessage> _generateDummyMessages() {
-    final now = DateTime.now();
-    return [
-      ChatMessage(
-        id: 'msg_1',
-        senderId: 'me',
-        text: 'Halo kak, apakah ${widget.productName ?? 'produknya'} masih tersedia untuk pesanan minggu ini?',
-        timestamp: now.subtract(const Duration(minutes: 18)),
-        isMe: true,
-        status: MessageStatus.read,
-      ),
-      ChatMessage(
-        id: 'msg_2',
-        senderId: 'seller',
-        text: 'Halo! Iya kak, kami baru panen batch segar tadi pagi. Mau pesan berapa kilogram?',
-        timestamp: now.subtract(const Duration(minutes: 15)),
-        isMe: false,
-        status: MessageStatus.read,
-      ),
-      ChatMessage(
-        id: 'msg_3',
-        senderId: 'me',
-        text: 'Saya butuh sekitar 50kg untuk stall pasar organik kami akhir pekan ini. Bisa dikirim hari Kamis?',
-        timestamp: now.subtract(const Duration(minutes: 12)),
-        isMe: true,
-        status: MessageStatus.read,
-      ),
-      ChatMessage(
-        id: 'msg_4',
-        senderId: 'seller',
-        text: 'Bisa kak! Untuk 50kg kami kasih harga spesial ya. Pengiriman Kamis pagi bisa diatur 🚛',
-        timestamp: now.subtract(const Duration(minutes: 8)),
-        isMe: false,
-        status: MessageStatus.read,
-      ),
-      ChatMessage(
-        id: 'msg_5',
-        senderId: 'me',
-        text: 'Wah mantap! Berapa total harganya kak?',
-        timestamp: now.subtract(const Duration(minutes: 5)),
-        isMe: true,
-        status: MessageStatus.delivered,
-      ),
-    ];
+    return [];
   }
 }
 

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../providers/user_provider.dart';
+import '../../../providers/store_provider.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/primary_button.dart';
 import 'seller_main_screen.dart';
@@ -22,9 +25,37 @@ class _SellerRegisterScreenState extends State<SellerRegisterScreen> {
   @override
   void dispose() { _pageController.dispose(); _storeNameController.dispose(); _storePhoneController.dispose(); _warehouseNameController.dispose(); _picNameController.dispose(); _picPhoneController.dispose(); super.dispose(); }
 
-  void _nextStep() {
-    if (_currentStep < 3) { setState(() => _currentStep++); _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut); }
-    else { Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SellerMainScreen())); }
+  Future<void> _nextStep() async {
+    if (_currentStep < 3) { 
+      setState(() => _currentStep++); 
+      _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut); 
+    }
+    else { 
+      final userId = context.read<UserProvider>().user.id;
+      final storeProv = context.read<StoreProvider>();
+      
+      final data = {
+        'user_id': userId,
+        'name': _storeNameController.text.trim(),
+        'phone': _storePhoneController.text.trim(),
+        'warehouse_name': _warehouseNameController.text.trim(),
+        'pic_name': _picNameController.text.trim(),
+        'pic_phone': _picPhoneController.text.trim(),
+        'province': 'Jawa Barat',
+        'city': 'Kabupaten Bandung',
+        'district': 'Ciwidey',
+        'postal_code': '40971',
+        'address': 'Jl. Raya Ciwidey No. 123',
+        'nik': '3273000000000000',
+      };
+
+      final success = await storeProv.registerStore(data);
+      if (success && mounted) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SellerMainScreen())); 
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal mendaftar toko')));
+      }
+    }
   }
 
   void _prevStep() {

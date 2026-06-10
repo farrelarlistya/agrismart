@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../data/dummy_data.dart';
 import '../../../models/product.dart';
 import '../../../providers/cart_provider.dart';
 import '../../../providers/favorite_provider.dart';
+import '../../../providers/product_provider.dart';
 import '../../../providers/search_provider.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/section_header.dart';
 import 'product_detail_screen.dart';
+import 'category_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,6 +29,16 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Fetch products from API when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProductProvider>().fetchProducts();
+      context.read<FavoriteProvider>().fetchFavorites();
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -36,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final searchProvider = context.watch<SearchProvider>();
+    final productProvider = context.watch<ProductProvider>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -47,11 +59,16 @@ class _HomeScreenState extends State<HomeScreen> {
             // Show search results or normal content
             if (searchProvider.query.isNotEmpty)
               _buildSearchResults(searchProvider)
+            else if (productProvider.isLoading)
+              const Padding(
+                padding: EdgeInsets.all(60),
+                child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+              )
             else ...[
               _buildBanner(),
               _buildCategories(),
-              _buildBestSellers(),
-              _buildRecommendations(),
+              _buildBestSellers(productProvider),
+              _buildRecommendations(productProvider),
               const SizedBox(height: 16),
             ],
           ],
@@ -206,14 +223,38 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: _categoryItems.map((c) => _CategoryChip(icon: c['icon'] as IconData, label: c['label'] as String)).toList(),
+          children: _categoryItems.map((c) {
+            final rawLabel = c['label'] as String;
+            final filterLabel = rawLabel.replaceAll('\n', ' ');
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(
+                        title: Text(filterLabel),
+                        surfaceTintColor: Colors.transparent,
+                        backgroundColor: AppColors.white,
+                      ),
+                      body: CategoryScreen(initialCategory: filterLabel),
+                    ),
+                  ),
+                );
+              },
+              child: _CategoryChip(icon: c['icon'] as IconData, label: rawLabel),
+            );
+          }).toList(),
         ),
         const SizedBox(height: 20),
       ]),
     );
   }
 
-  Widget _buildBestSellers() {
+  Widget _buildBestSellers(ProductProvider productProvider) {
+    final allProducts = productProvider.products;
+    final displayCount = allProducts.length > 5 ? 5 : allProducts.length;
+
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -225,9 +266,9 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: AppData.products.length > 5 ? 5 : AppData.products.length,
+          itemCount: displayCount,
           itemBuilder: (context, index) {
-            final product = AppData.products[index];
+            final product = allProducts[index];
             return Container(
               width: 150,
               margin: const EdgeInsets.only(right: 12),
@@ -248,7 +289,9 @@ class _HomeScreenState extends State<HomeScreen> {
     ]);
   }
 
-  Widget _buildRecommendations() {
+  Widget _buildRecommendations(ProductProvider productProvider) {
+    final allProducts = productProvider.products;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -260,9 +303,9 @@ class _HomeScreenState extends State<HomeScreen> {
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.7,
           ),
-          itemCount: AppData.products.length,
+          itemCount: allProducts.length,
           itemBuilder: (context, index) {
-            final product = AppData.products[index];
+            final product = allProducts[index];
             return Consumer<FavoriteProvider>(
               builder: (context, favProv, _) => ProductCard(
                 product: product,

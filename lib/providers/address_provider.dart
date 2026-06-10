@@ -1,36 +1,19 @@
 import 'package:flutter/foundation.dart';
+import '../data/api_service.dart';
+import '../core/constants/api_constants.dart';
 import '../models/shipping_address.dart';
 
-/// Manages multiple shipping addresses with CRUD operations.
+/// Manages multiple shipping addresses with API-backed CRUD operations.
 class AddressProvider extends ChangeNotifier {
-  final List<ShippingAddress> _addresses = [
-    const ShippingAddress(
-      id: 'addr_1',
-      recipientName: 'Julian Harvest',
-      phone: '0812-3456-7890',
-      address:
-          'Jl. Raya Kebun Raya No. 58, Blok C2, Villa Agrikultura, Kecamatan Cisarua, Kabupaten Bogor, Jawa Barat, 16793',
-      isDefault: true,
-    ),
-    const ShippingAddress(
-      id: 'addr_2',
-      recipientName: 'Julian Harvest (Warehouse)',
-      phone: '0812-9382-7768',
-      address:
-          'Kawasan Industri Sentral, Pergudangan AgriSmart Blok C-12, Cileungsi, Kabupaten Bogor, Jawa Barat, 16870',
-    ),
-    const ShippingAddress(
-      id: 'addr_3',
-      recipientName: 'Bapak Harvest',
-      phone: '0811-1111-2323',
-      address:
-          'Desa Sukamakur, RT 05 RW 02, Kec. Sukamakmur, Kab. Bogor, Jawa Barat, 16810',
-    ),
-  ];
+  final ApiService _api = ApiService();
+  String? _userId = 'user_001'; // Default fallback user ID
 
-  int _nextId = 4;
+  List<ShippingAddress> _addresses = [];
+  bool _isLoading = false;
+  bool _isInitialized = false;
 
   List<ShippingAddress> get addresses => List.unmodifiable(_addresses);
+  bool get isLoading => _isLoading;
 
   ShippingAddress? get defaultAddress {
     try {
@@ -40,65 +23,102 @@ class AddressProvider extends ChangeNotifier {
     }
   }
 
-  /// Add a new address.
-  void addAddress({
+  /// Update active user ID and fetch their addresses.
+  void updateUserId(String? userId) {
+    if (_userId != userId) {
+      _userId = userId;
+      _isInitialized = false;
+      _addresses.clear();
+      notifyListeners();
+      if (userId != null && userId.isNotEmpty) {
+        refreshAddresses();
+      }
+    }
+  }
+
+  /// Fetch addresses from the API.
+  Future<void> fetchAddresses() async {
+    if (_isInitialized) return;
+    if (_userId == null || _userId!.isEmpty) return;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _api.get(ApiConstants.userAddresses(_userId!));
+      final List data = response['data'] as List? ?? [];
+      _addresses = data.map((json) => ShippingAddress.fromJson(json)).toList();
+      _isInitialized = true;
+    } catch (e) {
+      debugPrint('Failed to fetch addresses: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  /// Force re-fetch from API.
+  Future<void> refreshAddresses() async {
+    _isInitialized = false;
+    await fetchAddresses();
+  }
+
+  /// Add a new address via API.
+  Future<void> addAddress({
     required String recipientName,
     required String phone,
     required String address,
     bool isDefault = false,
-  }) {
-    if (isDefault) {
-      _clearDefault();
-    }
-    _addresses.add(ShippingAddress(
-      id: 'addr_${_nextId++}',
-      recipientName: recipientName,
-      phone: phone,
-      address: address,
-      isDefault: isDefault || _addresses.isEmpty,
-    ));
-    notifyListeners();
-  }
-
-  /// Update an existing address.
-  void updateAddress(String id, {String? recipientName, String? phone, String? address}) {
-    final index = _addresses.indexWhere((a) => a.id == id);
-    if (index >= 0) {
-      _addresses[index] = _addresses[index].copyWith(
-        recipientName: recipientName,
-        phone: phone,
-        address: address,
-      );
-      notifyListeners();
+  }) async {
+    if (_userId == null || _userId!.isEmpty) return;
+    try {
+      await _api.post(ApiConstants.userAddresses(_userId!), body: {
+        'recipient_name': recipientName,
+        'phone': phone,
+        'address': address,
+        'is_default': isDefault,
+      });
+      _isInitialized = false;
+      await fetchAddresses();
+    } catch (e) {
+      debugPrint('Failed to add address: $e');
     }
   }
 
-  /// Delete an address.
-  void deleteAddress(String id) {
-    final wasDefault = _addresses.any((a) => a.id == id && a.isDefault);
-    _addresses.removeWhere((a) => a.id == id);
-    // If the deleted address was default, set the first one as default
-    if (wasDefault && _addresses.isNotEmpty) {
-      _addresses[0] = _addresses[0].copyWith(isDefault: true);
+  /// Update an existing address via API.
+  Future<void> updateAddress(String id, {String? recipientName, String? phone, String? address}) async {
+    try {
+      final body = <String, dynamic>{};
+      if (recipientName != null) body['recipient_name'] = recipientName;
+      if (phone != null) body['phone'] = phone;
+      if (address != null) body['address'] = address;
+
+      await _api.put(ApiConstants.address(id), body: body);
+      _isInitialized = false;
+      await fetchAddresses();
+    } catch (e) {
+      debugPrint('Failed to update address: $e');
     }
-    notifyListeners();
   }
 
-  /// Set an address as default.
-  void setDefault(String id) {
-    _clearDefault();
-    final index = _addresses.indexWhere((a) => a.id == id);
-    if (index >= 0) {
-      _addresses[index] = _addresses[index].copyWith(isDefault: true);
+  /// Delete an address via API.
+  Future<void> deleteAddress(String id) async {
+    try {
+      await _api.delete(ApiConstants.address(id));
+      _isInitialized = false;
+      await fetchAddresses();
+    } catch (e) {
+      debugPrint('Failed to delete address: $e');
     }
-    notifyListeners();
   }
 
-  void _clearDefault() {
-    for (int i = 0; i < _addresses.length; i++) {
-      if (_addresses[i].isDefault) {
-        _addresses[i] = _addresses[i].copyWith(isDefault: false);
-      }
+  /// Set an address as default via API.
+  Future<void> setDefault(String id) async {
+    try {
+      await _api.patch(ApiConstants.addressDefault(id));
+      _isInitialized = false;
+      await fetchAddresses();
+    } catch (e) {
+      debugPrint('Failed to set default address: $e');
     }
   }
 }

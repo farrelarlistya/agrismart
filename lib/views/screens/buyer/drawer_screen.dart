@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../providers/user_provider.dart';
+import '../../../providers/store_provider.dart';
 import 'profile_screen.dart';
 import 'address_screen.dart';
 import 'chat_list_screen.dart';
 import '../auth/login_screen.dart';
 import '../seller/seller_main_screen.dart';
+import '../seller/seller_register_screen.dart';
 
 class DrawerScreen extends StatelessWidget {
   const DrawerScreen({super.key});
@@ -22,9 +24,31 @@ class DrawerScreen extends StatelessWidget {
           _DrawerItem(icon: Icons.location_on_outlined, label: 'Alamat Pengiriman', onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const AddressScreen())); }),
         ]),
         const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Divider(color: AppColors.divider)),
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), child: GestureDetector(onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const SellerMainScreen())); },
-          child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16), decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(AppDimens.radiusM)),
-            child: const Row(children: [Icon(Icons.store, color: Colors.white, size: 18), SizedBox(width: 10), Text('Buat Toko', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)), Spacer(), Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14)])))),
+        Consumer<StoreProvider>(
+          builder: (context, storeProv, _) {
+            final hasStore = storeProv.hasStore;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), 
+              child: GestureDetector(
+                onTap: () { 
+                  Navigator.pop(context); 
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => hasStore ? const SellerMainScreen() : const SellerRegisterScreen())); 
+                },
+                child: Container(
+                  width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16), 
+                  decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(AppDimens.radiusM)),
+                  child: Row(children: [
+                    Icon(hasStore ? Icons.storefront : Icons.store, color: Colors.white, size: 18), 
+                    const SizedBox(width: 10), 
+                    Text(hasStore ? 'Toko Saya' : 'Buat Toko', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)), 
+                    const Spacer(), 
+                    const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14)
+                  ])
+                )
+              )
+            );
+          }
+        ),
         const SizedBox(height: 12),
         _buildSection('LAINNYA', [
           _DrawerItem(icon: Icons.chat_bubble_outline, label: 'Pesan', onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatListScreen())); }),
@@ -66,8 +90,15 @@ class _DrawerItem extends StatelessWidget {
   const _DrawerItem({required this.icon, required this.label, required this.onTap, this.iconColor, this.textColor});
   @override
   Widget build(BuildContext context) {
-    return ListTile(leading: Icon(icon, color: iconColor ?? AppColors.textSecondary, size: 20), title: Text(label, style: TextStyle(fontSize: 14, color: textColor ?? AppColors.textPrimary, fontWeight: FontWeight.w500)),
+    return ListTile(
+      leading: Icon(icon, color: iconColor ?? AppColors.textSecondary, size: 20),
+      title: Text(label, style: TextStyle(fontSize: 14, color: textColor ?? AppColors.textPrimary, fontWeight: FontWeight.w500)),
       trailing: const Icon(Icons.chevron_right, size: 18, color: AppColors.grey),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0), dense: true, onTap: onTap);
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+      minLeadingWidth: 24,
+      horizontalTitleGap: 8,
+      dense: true,
+      onTap: onTap,
+    );
   }
 }
