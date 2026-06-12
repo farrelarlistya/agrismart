@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Image.asset(
                     'assets/images/login_banner.png',
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       color: const Color(0xFFE8F5E9),
                       child: const Center(
                         child:

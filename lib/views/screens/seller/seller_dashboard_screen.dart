@@ -22,7 +22,7 @@ class SellerDashboardScreen extends StatelessWidget {
         Text('Tani Unggul Sejahtera • Toko Aktif', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
       ]),
       const Spacer(),
-      Switch(value: true, onChanged: (_) {}, activeColor: AppColors.primary),
+      Switch(value: true, onChanged: (_) {}, activeThumbColor: AppColors.primary),
       IconButton(icon: const Icon(Icons.chat_bubble_outline, color: AppColors.textPrimary, size: 22), onPressed: () {}),
     ]));
   }

@@ -125,5 +125,5 @@ class _ProfileToggleState extends State<_ProfileToggle> {
   @override
   void initState() { super.initState(); _value = widget.value; }
   @override
-  Widget build(BuildContext context) { return ListTile(leading: Icon(widget.icon, size: 20, color: AppColors.textSecondary), title: Text(widget.label, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, fontWeight: FontWeight.w500)), trailing: Switch(value: _value, onChanged: (v) => setState(() => _value = v), activeColor: AppColors.primary), dense: true); }
+  Widget build(BuildContext context) { return ListTile(leading: Icon(widget.icon, size: 20, color: AppColors.textSecondary), title: Text(widget.label, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, fontWeight: FontWeight.w500)), trailing: Switch(value: _value, onChanged: (v) => setState(() => _value = v), activeThumbColor: AppColors.primary), dense: true); }
 }

@@ -93,7 +93,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         title: 'Pesanan Anda',
         trailing: Text(p.seller, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
         child: Row(children: [
-          ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset(p.imageUrl, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(width: 50, height: 50, decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.eco, color: AppColors.primary, size: 26)))),
+          ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset(p.imageUrl, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (_, _, _) => Container(width: 50, height: 50, decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.eco, color: AppColors.primary, size: 26)))),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(p.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
@@ -114,7 +114,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: cartItems.map((item) => Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: Row(children: [
-            ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset(item.product.imageUrl, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(width: 50, height: 50, decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.eco, color: AppColors.primary, size: 26)))),
+            ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset(item.product.imageUrl, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (_, _, _) => Container(width: 50, height: 50, decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.eco, color: AppColors.primary, size: 26)))),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(item.product.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
@@ -225,7 +225,7 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(AppDimens.radiusL), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))]),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)), const Spacer(), if (trailing != null) trailing!]),
+        Row(children: [Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)), const Spacer(), ?trailing]),
         const SizedBox(height: 12), child,
       ]));
   }

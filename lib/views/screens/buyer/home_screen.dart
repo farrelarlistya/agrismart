@@ -169,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
           fit: StackFit.expand,
           children: [
             Image.asset('assets/images/hero_bg.png', fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1E8B4F), Color(0xFF2ECC71)])),
               ),
             ),

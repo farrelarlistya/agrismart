@@ -120,7 +120,7 @@ class _CartItemTile extends StatelessWidget {
       child: Padding(padding: const EdgeInsets.all(14), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         SizedBox(width: 20, height: 20, child: Checkbox(value: item.selected, onChanged: (v) => onSelectionChanged(v ?? false), activeColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)))),
         const SizedBox(width: 10),
-        ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset(product.imageUrl, width: 64, height: 64, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(width: 64, height: 64, decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.eco, color: AppColors.primary, size: 32)))),
+        ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset(product.imageUrl, width: 64, height: 64, fit: BoxFit.cover, errorBuilder: (_, _, _) => Container(width: 64, height: 64, decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.eco, color: AppColors.primary, size: 32)))),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(product.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
