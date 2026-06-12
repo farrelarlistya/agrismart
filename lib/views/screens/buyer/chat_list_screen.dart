@@ -36,6 +36,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         title: 'Pesan',
         showBack: true,
       ),
+<<<<<<< HEAD
       body: chatProv.isLoading 
         ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
         : chatProv.conversations.isEmpty
@@ -88,6 +89,45 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 );
               },
             ),
+=======
+      body: ListView.separated(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: _dummyChats.length,
+        separatorBuilder: (_, _) => const Divider(
+          height: 1,
+          indent: 76,
+          endIndent: 16,
+          color: AppColors.divider,
+        ),
+        itemBuilder: (context, index) {
+          final chat = _dummyChats[index];
+          return _ChatTile(
+            name: chat['name'] as String,
+            avatarLetter: chat['avatar'] as String,
+            lastMessage: chat['lastMessage'] as String,
+            time: chat['time'] as String,
+            unreadCount: chat['unread'] as int,
+            isOnline: chat['isOnline'] as bool? ?? false,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ChatDetailScreen(
+                    sellerName: chat['name'] as String,
+                    sellerAvatar: chat['avatar'] as String,
+                    isOnline: chat['isOnline'] as bool? ?? false,
+                    productName: chat['productName'] as String?,
+                    productImage: chat['productImage'] as String?,
+                    productPrice: chat['productPrice'] as double?,
+                    productUnit: chat['productUnit'] as String?,
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+>>>>>>> a34f0b3f9b58af18898df846c83a4fcf6885141a
     );
   }
 }

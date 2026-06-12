@@ -247,7 +247,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     child: Image.asset(
                       widget.productImage!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(
+                      errorBuilder: (_, _, _) => const Icon(
                         Icons.eco,
                         color: AppColors.primary,
                         size: 24,
