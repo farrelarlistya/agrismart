@@ -1,31 +1,170 @@
 import 'package:flutter/foundation.dart';
+import '../data/api_service.dart';
+import '../core/constants/api_constants.dart';
 import '../models/user_profile.dart';
 
-/// Manages user profile state (CRU — Create, Read, Update).
+/// Manages user profile state with API backend.
 class UserProvider extends ChangeNotifier {
+  final ApiService _api = ApiService();
+
   UserProfile _user = const UserProfile(
-    id: 'user_001',
-    name: 'Julian Harvest',
-    email: 'julian.harvest@email.com',
-    phone: '0812-3456-7890',
+    id: '',
+    name: '',
+    email: '',
+    phone: '',
   );
 
   bool _isLoading = false;
+  bool _isInitialized = false;
 
   UserProfile get user => _user;
   bool get isLoading => _isLoading;
+  bool get isInitialized => _isInitialized;
 
-  /// Update the user profile fields.
-  void updateProfile({String? name, String? email, String? phone}) {
+  /// Fetch the user profile from the API.
+  Future<void> fetchUser() async {
+    if (_isInitialized || _user.id.isEmpty) return;
     _isLoading = true;
     notifyListeners();
 
-    // Simulate API call
-    Future.delayed(const Duration(milliseconds: 800), () {
+    try {
+      final response = await _api.get(ApiConstants.user(_user.id));
+      _user = UserProfile.fromJson(response['data']);
+      _isInitialized = true;
+    } catch (e) {
+      debugPrint('Failed to fetch user: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  /// Log in a user.
+  Future<bool> login(String email, String password) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _api.post(
+        ApiConstants.login,
+        body: {
+          'email': email,
+          'password': password,
+        },
+      );
+      if (response['success'] == true) {
+        _user = UserProfile.fromJson(response['data']);
+        _isInitialized = true;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Failed to login: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  /// Register a user.
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String password,
+    required String phone,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _api.post(
+        ApiConstants.register,
+        body: {
+          'name': name,
+          'email': email,
+          'password': password,
+          'phone': phone,
+        },
+      );
+      if (response['success'] == true) {
+        _user = UserProfile.fromJson(response['data']);
+        _isInitialized = true;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Failed to register: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  /// Update the user profile via API.
+  Future<void> updateProfile({String? name, String? email, String? phone}) async {
+    if (_user.id.isEmpty) return;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final body = <String, dynamic>{};
+      if (name != null) body['name'] = name;
+      if (email != null) body['email'] = email;
+      if (phone != null) body['phone'] = phone;
+
+      final response = await _api.put(ApiConstants.user(_user.id), body: body);
+      _user = UserProfile.fromJson(response['data']);
+    } catch (e) {
+      debugPrint('Failed to update user: $e');
+      // Fallback to local update
       _user = _user.copyWith(name: name, email: email, phone: phone);
-      _isLoading = false;
-      notifyListeners();
-    });
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  /// Upload and update user avatar via API.
+  Future<bool> uploadAvatar(String imagePath) async {
+    if (_user.id.isEmpty) return false;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _api.uploadMultipart(
+        '${ApiConstants.users}/${_user.id}/avatar',
+        fileField: 'avatar',
+        filePath: imagePath,
+      );
+      if (response['success'] == true) {
+        _user = UserProfile.fromJson(response['data']);
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Failed to upload avatar: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  /// Log out user.
+  void logout() {
+    _user = const UserProfile(
+      id: '',
+      name: '',
+      email: '',
+      phone: '',
+    );
+    _isInitialized = false;
+    notifyListeners();
   }
 
   /// Set loading state externally (for form validation etc.)

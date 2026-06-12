@@ -35,6 +35,50 @@ class Product {
     this.isFavorite = false,
   });
 
+  /// Creates a Product from a JSON map (API response).
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['id'].toString(),
+      name: json['name'] as String? ?? '',
+      seller: json['seller'] as String? ?? '',
+      price: json['price'] != null ? double.tryParse(json['price'].toString()) ?? 0 : 0,
+      originalPrice: json['original_price'] != null
+          ? double.tryParse(json['original_price'].toString())
+          : null,
+      imageUrl: json['image_url'] as String? ?? '',
+      category: json['category'] as String? ?? '',
+      unit: json['unit'] as String? ?? 'kg',
+      rating: json['rating'] != null ? double.tryParse(json['rating'].toString()) ?? 4.5 : 4.5,
+      reviewCount: json['review_count'] != null ? int.tryParse(json['review_count'].toString()) ?? 0 : 0,
+      description: json['description'] as String? ?? '',
+      isOrganic: json['is_organic'] == 1 || json['is_organic'] == true,
+      isPremium: json['is_premium'] == 1 || json['is_premium'] == true,
+      stock: json['stock'] != null ? int.tryParse(json['stock'].toString()) ?? 100 : 100,
+      location: json['location'] as String? ?? '',
+    );
+  }
+
+  /// Converts this Product to a JSON map.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'seller': seller,
+      'price': price,
+      'original_price': originalPrice,
+      'image_url': imageUrl,
+      'category': category,
+      'unit': unit,
+      'rating': rating,
+      'review_count': reviewCount,
+      'description': description,
+      'is_organic': isOrganic,
+      'is_premium': isPremium,
+      'stock': stock,
+      'location': location,
+    };
+  }
+
   /// Creates a copy of this Product with the given fields replaced.
   Product copyWith({
     String? id,

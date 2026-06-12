@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../providers/user_provider.dart';
+import '../../../providers/address_provider.dart';
+import '../../../providers/favorite_provider.dart';
+import '../../../providers/store_provider.dart';
+import '../../widgets/app_text_field.dart';
 import 'register_screen.dart';
 import '../buyer/main_screen.dart';
 
@@ -27,13 +33,45 @@ class _LoginScreenState extends State<LoginScreen> {
   void _login() async {
     if (_formKey.currentState?.validate() != true) return;
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MainScreen()),
-    );
+
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final success = await userProvider.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (success) {
+        final userId = userProvider.user.id;
+        Provider.of<AddressProvider>(context, listen: false).updateUserId(userId);
+        Provider.of<FavoriteProvider>(context, listen: false).updateUserId(userId);
+        Provider.of<StoreProvider>(context, listen: false).fetchMyStore(userId);
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email atau kata sandi salah. Harap periksa kembali.'),
+            backgroundColor: AppColors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Terjadi kesalahan: $e'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -71,7 +109,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // White curved container that overlaps the banner
                 Container(
-                  margin: EdgeInsets.only(top: bannerHeight - overlapHeight),
+                  margin: EdgeInsets.only(
+                    top: bannerHeight - overlapHeight < 0
+                        ? 0.0
+                        : bannerHeight - overlapHeight,
+                  ),
                   width: double.infinity,
                   decoration: const BoxDecoration(
                     color: AppColors.white,

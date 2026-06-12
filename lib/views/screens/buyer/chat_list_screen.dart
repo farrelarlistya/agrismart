@@ -9,64 +9,7 @@ class ChatListScreen extends StatelessWidget {
   const ChatListScreen({super.key});
 
   // Dummy conversations for UI demonstration
-  static const List<Map<String, dynamic>> _dummyChats = [
-    {
-      'name': 'AgriFresh Bandung',
-      'avatar': 'A',
-      'lastMessage': 'Tomat organiknya ready stock, Kak!',
-      'time': '14:30',
-      'unread': 2,
-      'isOnline': true,
-      'productName': 'Tomat Organik',
-      'productImage': 'assets/images/tomato.png',
-      'productPrice': 20000.0,
-      'productUnit': 'kg',
-    },
-    {
-      'name': 'Tani Maju',
-      'avatar': 'T',
-      'lastMessage': 'Pesanan sudah kami proses ya',
-      'time': '12:15',
-      'unread': 0,
-      'isOnline': false,
-      'productName': 'Brokoli Segar',
-      'productImage': 'assets/images/broccoli.png',
-      'productPrice': 15000.0,
-      'productUnit': 'kg',
-    },
-    {
-      'name': 'Kebun Sehat',
-      'avatar': 'K',
-      'lastMessage': 'Buncis muda baru panen pagi ini 🌱',
-      'time': 'Kemarin',
-      'unread': 1,
-      'isOnline': true,
-      'productName': 'Buncis Muda',
-      'productImage': 'assets/images/beans.png',
-      'productPrice': 12000.0,
-      'productUnit': 'kg',
-    },
-    {
-      'name': 'Sawah Organik',
-      'avatar': 'S',
-      'lastMessage': 'Terima kasih sudah belanja!',
-      'time': 'Kemarin',
-      'unread': 0,
-      'isOnline': false,
-    },
-    {
-      'name': 'Lebah Alam',
-      'avatar': 'L',
-      'lastMessage': 'Madu hutan ready kak, fresh from farm',
-      'time': '05 Mei',
-      'unread': 0,
-      'isOnline': false,
-      'productName': 'Madu Hutan Murni',
-      'productImage': 'assets/images/honey.png',
-      'productPrice': 85000.0,
-      'productUnit': 'botol',
-    },
-  ];
+  static const List<Map<String, dynamic>> _dummyChats = [];
 
   @override
   Widget build(BuildContext context) {

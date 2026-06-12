@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/price_formatter.dart';
-import '../../../data/dummy_data.dart';
 import '../../../models/product.dart';
 import '../../../providers/cart_provider.dart';
 import '../../../providers/favorite_provider.dart';
+import '../../../providers/product_provider.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/product_card.dart';
 import 'chat_detail_screen.dart';
@@ -28,10 +28,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
   void dispose() { _tabController.dispose(); super.dispose(); }
 
   List<Product> get _relatedProducts {
-    return AppData.products
-        .where((p) => p.category == widget.product.category && p.id != widget.product.id)
-        .take(4)
-        .toList();
+    return context.read<ProductProvider>().getRelated(widget.product);
   }
 
   @override
