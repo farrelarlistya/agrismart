@@ -71,17 +71,15 @@ products.post('/', async (c) => {
     const body = await c.req.json();
     const {
       name, seller, price, original_price, image_url, category_id,
-      unit, rating, review_count, description, is_organic, is_premium,
-      stock, location
+      unit, description, stock, location
     } = body;
 
     const result = await query(
       `INSERT INTO products (name, seller, price, original_price, image_url, category_id,
-        unit, rating, review_count, description, is_organic, is_premium, stock, location)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        unit, description, stock, location)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [name, seller, price, original_price || null, image_url, category_id || null,
-       unit || 'kg', rating || 4.5, review_count || 0, description || '',
-       is_organic || false, is_premium || false, stock || 100, location || '']
+       unit || 'kg', description || '', stock || 100, location || '']
     );
 
     return c.json({ success: true, data: { id: result.insertId } }, 201);
@@ -100,8 +98,7 @@ products.put('/:id', async (c) => {
 
     const allowedFields = [
       'name', 'seller', 'price', 'original_price', 'image_url', 'category_id',
-      'unit', 'rating', 'review_count', 'description', 'is_organic', 'is_premium',
-      'stock', 'location'
+      'unit', 'description', 'stock', 'location'
     ];
 
     for (const field of allowedFields) {

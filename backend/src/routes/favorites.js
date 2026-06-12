@@ -9,8 +9,8 @@ favorites.get('/users/:userId/favorites', async (c) => {
     const userId = c.req.param('userId');
     const rows = await query(
       `SELECT f.product_id, p.name, p.seller, p.price, p.original_price,
-              p.image_url, c.name AS category, p.unit, p.rating, p.review_count,
-              p.description, p.is_organic, p.is_premium, p.stock, p.location
+              p.image_url, c.name AS category, p.unit,
+              p.description, p.stock, p.location
        FROM favorites f
        LEFT JOIN products p ON f.product_id = p.id
        LEFT JOIN categories c ON p.category_id = c.id

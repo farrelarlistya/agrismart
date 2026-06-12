@@ -6,6 +6,7 @@ import '../../../providers/cart_provider.dart';
 import '../../../providers/favorite_provider.dart';
 import '../../../providers/product_provider.dart';
 import '../../../providers/search_provider.dart';
+import '../../../core/utils/auth_guard.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/section_header.dart';
 import 'product_detail_screen.dart';
@@ -160,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   isFavorite: favProv.isFavorite(product.id),
                   onTap: () => _openProduct(product),
                   onAddToCart: () => _addToCart(product),
-                  onToggleFavorite: () => favProv.toggleFavorite(product.id),
+                  onToggleFavorite: () => AuthGuard.run(context, () => favProv.toggleFavorite(product.id)),
                 ),
               );
             },
@@ -278,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   isFavorite: favProv.isFavorite(product.id),
                   onTap: () => _openProduct(product),
                   onAddToCart: () => _addToCart(product),
-                  onToggleFavorite: () => favProv.toggleFavorite(product.id),
+                  onToggleFavorite: () => AuthGuard.run(context, () => favProv.toggleFavorite(product.id)),
                 ),
               ),
             );
@@ -312,7 +313,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 isFavorite: favProv.isFavorite(product.id),
                 onTap: () => _openProduct(product),
                 onAddToCart: () => _addToCart(product),
-                onToggleFavorite: () => favProv.toggleFavorite(product.id),
+                onToggleFavorite: () => AuthGuard.run(context, () => favProv.toggleFavorite(product.id)),
               ),
             );
           },

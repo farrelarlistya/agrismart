@@ -10,7 +10,8 @@ import orders from './routes/orders.js';
 import addresses from './routes/addresses.js';
 import stores from './routes/stores.js';
 import favorites from './routes/favorites.js';
-
+import cart from './routes/cart.js';
+import chats from './routes/chats.js';
 dotenv.config();
 
 import { serveStatic } from '@hono/node-server/serve-static';
@@ -57,7 +58,8 @@ app.route('/api', addresses);
 app.route('/api/orders', orders);
 app.route('/api/stores', stores);
 app.route('/api', favorites);
-
+app.route('/api/cart', cart);
+app.route('/api/chats', chats);
 // 404 handler
 app.notFound((c) => {
   return c.json({ success: false, message: 'Route not found' }, 404);

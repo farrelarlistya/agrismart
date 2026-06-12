@@ -42,4 +42,16 @@ class ApiConstants {
 
   /// Single order endpoint.
   static String order(String id) => '/api/orders/$id';
+
+  /// Cart endpoints
+  static String cart(String userId) => '/api/cart?user_id=$userId';
+  static const String cartBase = '/api/cart';
+  static String cartItem(String id) => '/api/cart/$id';
+  static String clearCart(String userId) => '/api/cart/user/$userId';
+
+  /// Chats endpoints
+  static String chatConversations(String userId) => '/api/chats/conversations?user_id=$userId';
+  static const String createConversation = '/api/chats/conversations';
+  static String chatMessages(String conversationId) => '/api/chats/conversations/$conversationId/messages';
+  static const String sendMessage = '/api/chats/messages';
 }

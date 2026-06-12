@@ -5,6 +5,7 @@ import '../../../providers/user_provider.dart';
 import '../../../providers/address_provider.dart';
 import '../../../providers/favorite_provider.dart';
 import '../../../providers/store_provider.dart';
+import '../../../data/api_service.dart';
 import '../../widgets/app_text_field.dart';
 import 'register_screen.dart';
 import '../buyer/main_screen.dart';
@@ -50,10 +51,14 @@ class _LoginScreenState extends State<LoginScreen> {
         Provider.of<FavoriteProvider>(context, listen: false).updateUserId(userId);
         Provider.of<StoreProvider>(context, listen: false).fetchMyStore(userId);
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainScreen()),
-        );
+        if (Navigator.canPop(context)) {
+          Navigator.popUntil(context, (route) => route.isFirst);
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const MainScreen()),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -65,9 +70,10 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
+      final errorMessage = e is ApiException ? e.message : e.toString();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Terjadi kesalahan: $e'),
+          content: Text('Terjadi kesalahan: $errorMessage'),
           backgroundColor: AppColors.red,
         ),
       );
@@ -106,6 +112,35 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+
+                // Back button overlay if screen can pop
+                if (Navigator.canPop(context))
+                  Positioned(
+                    top: MediaQuery.of(context).padding.top + 10,
+                    left: 16,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: AppColors.textPrimary,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                  ),
 
                 // White curved container that overlaps the banner
                 Container(

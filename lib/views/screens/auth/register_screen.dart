@@ -4,6 +4,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../providers/user_provider.dart';
 import '../../../providers/address_provider.dart';
 import '../../../providers/favorite_provider.dart';
+import '../../../data/api_service.dart';
 import '../../widgets/agrismart_app_bar.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/primary_button.dart';
@@ -63,10 +64,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Provider.of<AddressProvider>(context, listen: false).updateUserId(userId);
         Provider.of<FavoriteProvider>(context, listen: false).updateUserId(userId);
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainScreen()),
-        );
+        if (Navigator.canPop(context)) {
+          Navigator.popUntil(context, (route) => route.isFirst);
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const MainScreen()),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -78,9 +83,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
+      final errorMessage = e is ApiException ? e.message : e.toString();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Terjadi kesalahan: $e'),
+          content: Text('Terjadi kesalahan: $errorMessage'),
           backgroundColor: AppColors.red,
         ),
       );

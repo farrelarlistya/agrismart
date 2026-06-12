@@ -61,6 +61,9 @@ class UserProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Failed to login: $e');
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
     }
 
     _isLoading = false;
@@ -97,6 +100,9 @@ class UserProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Failed to register: $e');
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
     }
 
     _isLoading = false;

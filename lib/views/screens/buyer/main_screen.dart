@@ -8,6 +8,7 @@ import 'category_screen.dart';
 import 'orders_screen.dart';
 import 'favorite_screen.dart';
 import 'cart_screen.dart';
+import '../../../core/utils/auth_guard.dart';
 import 'chat_list_screen.dart';
 import 'drawer_screen.dart';
 
@@ -121,10 +122,12 @@ class _MainScreenState extends State<MainScreen> {
             Icons.chat_bubble_outline,
             color: AppColors.textPrimary,
           ),
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ChatListScreen()),
-          ),
+          onPressed: () => AuthGuard.run(context, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ChatListScreen()),
+            );
+          }),
         ),
       ],
       bottom: PreferredSize(

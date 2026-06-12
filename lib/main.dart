@@ -8,6 +8,9 @@ import 'providers/user_provider.dart';
 import 'providers/address_provider.dart';
 import 'providers/search_provider.dart';
 import 'providers/store_provider.dart';
+import 'providers/order_provider.dart';
+import 'providers/chat_provider.dart';
+import 'views/screens/buyer/main_screen.dart';
 import 'views/screens/auth/login_screen.dart';
 
 void main() {
@@ -35,6 +38,8 @@ class AgriSmartApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AddressProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
         ChangeNotifierProvider(create: (_) => StoreProvider()),
+        ChangeNotifierProvider(create: (_) => OrderProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       child: MaterialApp(
         title: 'AgriSmart',
@@ -48,7 +53,7 @@ class AgriSmartApp extends StatelessWidget {
           fontFamily: 'Poppins',
           useMaterial3: true,
         ),
-        home: const LoginScreen(),
+        home: const MainScreen(),
       ),
     );
   }

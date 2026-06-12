@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/price_formatter.dart';
+import '../../../providers/user_provider.dart';
+import '../../../providers/order_provider.dart';
 import '../../widgets/status_badge.dart';
+import '../auth/login_screen.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -24,72 +28,114 @@ class _OrdersScreenState extends State<OrdersScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
-  final List<Map<String, dynamic>> _orders = const [
-    {
-      'id': '#INV-2024001',
-      'date': '24 Okt 2024',
-      'status': 'Menunggu Pengiriman',
-      'productName': 'Ceri Organik',
-      'productImage': 'assets/images/cherry.png',
-      'seller': 'AgriFresh Bandung',
-      'quantity': 1,
-      'unit': 'kg',
-      'price': 25000,
-      'tab': 0,
-    },
-    {
-      'id': '#INV-2024002',
-      'date': '16 Okt 2024',
-      'status': 'Dikirim',
-      'productName': 'Tomat Ceri',
-      'productImage': 'assets/images/cherry_tomato.png',
-      'seller': 'AgriFresh Bandung',
-      'quantity': 2,
-      'unit': 'kg',
-      'price': 40000,
-      'tab': 1,
-    },
-    {
-      'id': '#INV-2024005',
-      'date': '12 Okt 2024',
-      'status': 'Selesai',
-      'productName': 'Ceri Organik',
-      'productImage': 'assets/images/cherry.png',
-      'seller': 'AgriFresh Bandung',
-      'quantity': 2,
-      'unit': 'kg',
-      'price': 75000,
-      'tab': 2,
-    },
-    {
-      'id': '#INV-2024006',
-      'date': '10 Okt 2024',
-      'status': 'Selesai',
-      'productName': 'Melon Super',
-      'productImage': 'assets/images/melon.png',
-      'seller': 'Kebun Makmur',
-      'quantity': 1,
-      'unit': 'buah',
-      'price': 32500,
-      'tab': 2,
-    },
-  ];
-
-  List<Map<String, dynamic>> _getOrdersByTab(int tab) {
-    if (tab == 0) return _orders.where((o) => o['status'] == 'Menunggu Pengiriman' || o['status'] == 'Menunggu Dikirim').toList();
-    if (tab == 1) return _orders.where((o) => o['status'] == 'Dikirim').toList();
-    return _orders.where((o) => o['status'] == 'Selesai').toList();
+  List<Map<String, dynamic>> _getOrdersByTab(List<Map<String, dynamic>> orders, int tab) {
+    if (tab == 0) return orders.where((o) => o['status'] == 'Menunggu Pengiriman' || o['status'] == 'Menunggu Dikirim').toList();
+    if (tab == 1) return orders.where((o) => o['status'] == 'Dikirim').toList();
+    return orders.where((o) => o['status'] == 'Selesai').toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    final userProv = Provider.of<UserProvider>(context);
+    final isGuest = userProv.user.id.isEmpty;
+    final orderProv = Provider.of<OrderProvider>(context);
+
+    if (!isGuest) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        orderProv.updateUserId(userProv.user.id);
+      });
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(children: [
         _buildHeader(),
-        _buildTabs(),
-        Expanded(child: TabBarView(controller: _tabController, children: List.generate(3, (i) => _buildOrderList(_getOrdersByTab(i))))),
+        if (isGuest)
+          Expanded(child: _buildGuestPlaceholder())
+        else ...[
+          _buildTabs(),
+          Expanded(
+            child: orderProv.isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : TabBarView(
+                    controller: _tabController,
+                    children: List.generate(3, (i) => _buildOrderList(_getOrdersByTab(orderProv.orders, i))),
+                  ),
+          ),
+        ],
       ]),
+    );
+  }
+
+  Widget _buildGuestPlaceholder() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: AppColors.greenBadge,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.receipt_long_outlined,
+                size: 64,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Belum Masuk Akun',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Silakan masuk terlebih dahulu untuk melihat daftar pesanan Anda.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: 160,
+              height: 44,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Masuk Sekarang',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -162,7 +208,7 @@ class _OrderCard extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.eco, color: AppColors.primary, size: 26),
+                child: const Icon(Icons.shopping_bag_outlined, color: AppColors.primary, size: 26),
               ),
             ),
           ),

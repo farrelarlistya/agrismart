@@ -8,6 +8,7 @@ import '../../../providers/favorite_provider.dart';
 import '../../../providers/product_provider.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/product_card.dart';
+import '../../../core/utils/auth_guard.dart';
 import 'chat_detail_screen.dart';
 import 'checkout_screen.dart';
 
@@ -58,7 +59,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
           builder: (context, favProv, _) {
             final isFav = favProv.isFavorite(p.id);
             return GestureDetector(
-              onTap: () => favProv.toggleFavorite(p.id),
+              onTap: () => AuthGuard.run(context, () => favProv.toggleFavorite(p.id)),
               child: Container(margin: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)]), child: Padding(padding: const EdgeInsets.all(8), child: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? AppColors.red : AppColors.grey, size: 20))),
             );
           },
@@ -171,10 +172,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
       child: Row(children: [
         // Chat Toko
         GestureDetector(
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChatDetailScreen(
-            sellerName: p.seller, sellerAvatar: p.seller.isNotEmpty ? p.seller[0] : 'T', isOnline: true,
-            productName: p.name, productImage: p.imageUrl, productPrice: p.price, productUnit: p.unit,
-          ))),
+          onTap: () => AuthGuard.run(context, () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => ChatDetailScreen(
+              sellerName: p.seller, sellerAvatar: p.seller.isNotEmpty ? p.seller[0] : 'T', isOnline: true,
+              productName: p.name, productImage: p.imageUrl, productPrice: p.price, productUnit: p.unit,
+            )));
+          }),
           child: Container(width: 48, height: 48, decoration: BoxDecoration(border: Border.all(color: AppColors.primary), borderRadius: BorderRadius.circular(AppDimens.radiusL)),
             child: const Icon(Icons.chat_bubble_outline, color: AppColors.primary, size: 22)),
         ),
@@ -196,11 +199,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
           flex: 2,
           child: PrimaryButton(
             text: 'Beli Sekarang →',
-            onPressed: () {
+            onPressed: () => AuthGuard.run(context, () {
               Navigator.push(context, MaterialPageRoute(
                 builder: (_) => CheckoutScreen(directProduct: p, directQuantity: _quantity),
               ));
-            },
+            }),
           ),
         ),
       ]),

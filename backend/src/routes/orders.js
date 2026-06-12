@@ -6,16 +6,24 @@ const orders = new Hono();
 // GET /api/orders — List all orders (optionally filter by user_id)
 orders.get('/', async (c) => {
   try {
-    let sql = 'SELECT * FROM orders';
+    let sql = `
+      SELECT o.*, 
+             (SELECT p.name FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id = o.id LIMIT 1) as product_name,
+             (SELECT p.image_url FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id = o.id LIMIT 1) as product_image,
+             (SELECT s.name FROM order_items oi JOIN products p ON oi.product_id = p.id JOIN stores s ON p.seller_id = s.id WHERE oi.order_id = o.id LIMIT 1) as seller_name,
+             (SELECT p.unit FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id = o.id LIMIT 1) as unit,
+             (SELECT SUM(quantity) FROM order_items WHERE order_id = o.id) as total_quantity
+      FROM orders o
+    `;
     const params = [];
 
     const userId = c.req.query('user_id');
     if (userId) {
-      sql += ' WHERE user_id = ?';
+      sql += ' WHERE o.user_id = ?';
       params.push(userId);
     }
 
-    sql += ' ORDER BY created_at DESC';
+    sql += ' ORDER BY o.created_at DESC';
     const rows = await query(sql, params);
     return c.json({ success: true, data: rows });
   } catch (error) {

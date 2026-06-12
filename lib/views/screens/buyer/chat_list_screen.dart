@@ -1,61 +1,93 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../providers/user_provider.dart';
+import '../../../providers/chat_provider.dart';
 import '../../widgets/agrismart_app_bar.dart';
 import 'chat_detail_screen.dart';
 
 /// Screen displaying the list of chat conversations.
-/// Ready to be connected to a real messaging backend or state management layer.
-class ChatListScreen extends StatelessWidget {
+class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
 
-  // Dummy conversations for UI demonstration
-  static const List<Map<String, dynamic>> _dummyChats = [];
+  @override
+  State<ChatListScreen> createState() => _ChatListScreenState();
+}
+
+class _ChatListScreenState extends State<ChatListScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProv = Provider.of<UserProvider>(context, listen: false);
+      final chatProv = Provider.of<ChatProvider>(context, listen: false);
+      if (userProv.user.id.isNotEmpty) {
+        chatProv.updateUserId(userProv.user.id);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final chatProv = Provider.of<ChatProvider>(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AgriSmartAppBar(
         title: 'Pesan',
         showBack: true,
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: _dummyChats.length,
-        separatorBuilder: (_, __) => const Divider(
-          height: 1,
-          indent: 76,
-          endIndent: 16,
-          color: AppColors.divider,
-        ),
-        itemBuilder: (context, index) {
-          final chat = _dummyChats[index];
-          return _ChatTile(
-            name: chat['name'] as String,
-            avatarLetter: chat['avatar'] as String,
-            lastMessage: chat['lastMessage'] as String,
-            time: chat['time'] as String,
-            unreadCount: chat['unread'] as int,
-            isOnline: chat['isOnline'] as bool? ?? false,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ChatDetailScreen(
-                    sellerName: chat['name'] as String,
-                    sellerAvatar: chat['avatar'] as String,
-                    isOnline: chat['isOnline'] as bool? ?? false,
-                    productName: chat['productName'] as String?,
-                    productImage: chat['productImage'] as String?,
-                    productPrice: chat['productPrice'] as double?,
-                    productUnit: chat['productUnit'] as String?,
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
+      body: chatProv.isLoading 
+        ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+        : chatProv.conversations.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.chat_bubble_outline, size: 64, color: AppColors.grey.withOpacity(0.4)),
+                  const SizedBox(height: 12),
+                  const Text('Belum ada pesan', style: TextStyle(color: AppColors.grey, fontSize: 14)),
+                ],
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: chatProv.conversations.length,
+              separatorBuilder: (_, __) => const Divider(
+                height: 1,
+                indent: 76,
+                endIndent: 16,
+                color: AppColors.divider,
+              ),
+              itemBuilder: (context, index) {
+                final chat = chatProv.conversations[index];
+                final name = chat['sellerName'] as String;
+                final avatarLetter = name.isNotEmpty ? name[0].toUpperCase() : 'A';
+                
+                return _ChatTile(
+                  name: name,
+                  avatarLetter: avatarLetter,
+                  lastMessage: chat['lastMessage'] as String,
+                  time: chat['time'] as String,
+                  unreadCount: chat['unread'] as int? ?? 0,
+                  isOnline: false, // Could be derived if online status API exists
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatDetailScreen(
+                          conversationId: chat['id'] as String,
+                          sellerName: name,
+                          sellerAvatar: avatarLetter,
+                          isOnline: false,
+                          productName: chat['productName'] as String?,
+                          productImage: chat['productImage'] as String?,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
     );
   }
 }

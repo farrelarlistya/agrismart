@@ -6,6 +6,7 @@ import '../../../models/cart_item.dart';
 import '../../../providers/cart_provider.dart';
 import '../../widgets/agrismart_app_bar.dart';
 import '../../widgets/primary_button.dart';
+import '../../../core/utils/auth_guard.dart';
 import 'checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
@@ -25,7 +26,13 @@ class CartScreen extends StatelessWidget {
       ]),
       body: Consumer<CartProvider>(
         builder: (context, cart, _) => Column(children: [
-          Expanded(child: cart.items.isEmpty ? _buildEmpty() : _buildCartList(context, cart)),
+          Expanded(
+            child: cart.isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : cart.items.isEmpty
+                    ? _buildEmpty()
+                    : _buildCartList(context, cart),
+          ),
           _buildBottomBar(context, cart),
         ]),
       ),
@@ -92,9 +99,9 @@ class CartScreen extends StatelessWidget {
         const SizedBox(width: 16),
         Expanded(child: PrimaryButton(
           text: 'Checkout (${cart.selectedCount} item) →',
-          onPressed: cart.selectedCount > 0 ? () {
+          onPressed: cart.selectedCount > 0 ? () => AuthGuard.run(context, () {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckoutScreen()));
-          } : null,
+          }) : null,
           height: 46,
         )),
       ]),

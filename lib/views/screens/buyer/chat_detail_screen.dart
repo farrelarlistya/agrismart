@@ -3,11 +3,13 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../models/chat_message.dart';
 import '../../../providers/product_provider.dart';
+import '../../../providers/chat_provider.dart';
 import 'product_detail_screen.dart';
 
 /// Chat detail screen with WhatsApp/Telegram-style conversation UI.
 /// Architecture is ready for real-time backend integration (e.g., WebSocket, Firebase).
 class ChatDetailScreen extends StatefulWidget {
+  final String? conversationId;
   final String sellerName;
   final String sellerAvatar;
   final bool isOnline;
@@ -18,6 +20,7 @@ class ChatDetailScreen extends StatefulWidget {
 
   const ChatDetailScreen({
     super.key,
+    this.conversationId,
     required this.sellerName,
     required this.sellerAvatar,
     this.isOnline = false,
@@ -36,15 +39,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
 
-  // Messages list — in production, this would come from a state management layer
-  late List<ChatMessage> _messages;
-
   @override
   void initState() {
     super.initState();
-    _messages = _generateDummyMessages();
-    // Auto-scroll to bottom after build
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.conversationId != null) {
+        context.read<ChatProvider>().fetchMessages(widget.conversationId!);
+      }
+      _scrollToBottom();
+    });
   }
 
   @override
@@ -66,53 +69,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
   }
 
-  /// Sends a new message. In production, this would call a messaging API.
+  /// Sends a new message using ChatProvider.
   void _sendMessage() {
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || widget.conversationId == null) return;
 
-    setState(() {
-      _messages.add(ChatMessage(
-        id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
-        senderId: 'me',
-        text: text,
-        timestamp: DateTime.now(),
-        isMe: true,
-        status: MessageStatus.sent,
-      ));
-    });
+    context.read<ChatProvider>().sendMessage(widget.conversationId!, text);
 
     _messageController.clear();
-
-    // Auto-scroll to the new message
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-
-    // Simulate seller auto-reply after 1.5 seconds
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (!mounted) return;
-      setState(() {
-        _messages.add(ChatMessage(
-          id: 'msg_reply_${DateTime.now().millisecondsSinceEpoch}',
-          senderId: 'seller',
-          text: _getAutoReply(),
-          timestamp: DateTime.now(),
-          isMe: false,
-          status: MessageStatus.read,
-        ));
-      });
-      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-    });
-  }
-
-  String _getAutoReply() {
-    final replies = [
-      'Baik kak, segera kami proses ya! 🙏',
-      'Terima kasih sudah menghubungi kami!',
-      'Stok masih tersedia kak, silakan order 😊',
-      'Kami akan cek dan kabari secepatnya ya.',
-      'Siap kak! Ada yang lain yang bisa dibantu?',
-    ];
-    return replies[_messages.length % replies.length];
   }
 
   @override
@@ -340,21 +305,29 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   Widget _buildMessageList() {
-    final items = _buildMessageItemsWithSeparators();
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      itemCount: items.length,
-      itemBuilder: (context, index) => items[index],
+    if (widget.conversationId == null) return const SizedBox();
+    
+    return Consumer<ChatProvider>(
+      builder: (context, chatProv, child) {
+        final messages = chatProv.getMessages(widget.conversationId!);
+        final items = _buildMessageItemsWithSeparators(messages);
+        
+        return ListView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          itemCount: items.length,
+          itemBuilder: (context, index) => items[index],
+        );
+      },
     );
   }
 
   /// Builds the flat list of message widgets interleaved with date separators.
-  List<Widget> _buildMessageItemsWithSeparators() {
+  List<Widget> _buildMessageItemsWithSeparators(List<ChatMessage> messages) {
     final List<Widget> items = [];
     String? lastDate;
 
-    for (final message in _messages) {
+    for (final message in messages) {
       final dateLabel = _formatDateLabel(message.timestamp);
       if (dateLabel != lastDate) {
         items.add(_DateSeparator(label: dateLabel));
@@ -486,10 +459,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       return '${(price / 1000).toStringAsFixed(0)}.000';
     }
     return price.toStringAsFixed(0);
-  }
-
-  List<ChatMessage> _generateDummyMessages() {
-    return [];
   }
 }
 
