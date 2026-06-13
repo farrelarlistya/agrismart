@@ -116,11 +116,12 @@ async function seed() {
       price DECIMAL(12,2) NOT NULL,
       original_price DECIMAL(12,2) DEFAULT NULL,
       image_url VARCHAR(500) NOT NULL,
+      image_urls TEXT DEFAULT NULL,
+      video_url VARCHAR(500) DEFAULT NULL,
       category_id INT DEFAULT NULL,
       unit VARCHAR(50) DEFAULT 'kg',
       description TEXT,
       stock INT DEFAULT 100,
-      location VARCHAR(255) DEFAULT '',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       is_active TINYINT(1) DEFAULT 1,
       FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
@@ -226,8 +227,20 @@ async function seed() {
 
   console.log(`✅ Skipped products insertion (database is empty except categories)`);
 
-  // 3. Users (Empty)
-  console.log('✅ Skipped users insertion');
+  // 3. Users
+  const hashedPassword = await bcrypt.hash('password123', 10);
+  await connection.execute(
+    'INSERT INTO users (id, name, email, password, role) VALUES (?, ?, ?, ?, ?)',
+    ['user_dummy_1', 'Seller Dummy', 'seller@gmail.com', hashedPassword, 'seller']
+  );
+  console.log('✅ Inserted 1 dummy user (seller@gmail.com / password123)');
+
+  // Create store for the dummy user
+  await connection.execute(
+    'INSERT INTO stores (id, user_id, name, phone, province, city) VALUES (?, ?, ?, ?, ?, ?)',
+    ['store_dummy_1', 'user_dummy_1', 'Toko Pertanian Sejahtera', '08123456789', 'Jawa Barat', 'Bandung']
+  );
+  console.log('✅ Inserted 1 dummy store');
 
   // 4. Addresses (Empty)
   console.log(`✅ Skipped addresses insertion`);

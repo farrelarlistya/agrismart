@@ -5,6 +5,7 @@ import '../../../core/utils/price_formatter.dart';
 import '../../../providers/product_provider.dart';
 import '../../../providers/store_provider.dart';
 import '../../../models/product.dart';
+import 'seller_add_product_screen.dart';
 
 class SellerProductsScreen extends StatefulWidget {
   const SellerProductsScreen({super.key});
@@ -92,7 +93,15 @@ class _SellerProductsScreenState extends State<SellerProductsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SellerAddProductScreen()),
+          );
+          if (result == true) {
+            _loadProducts();
+          }
+        },
         backgroundColor: AppColors.primary,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 28),

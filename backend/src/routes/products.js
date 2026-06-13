@@ -7,9 +7,10 @@ const products = new Hono();
 products.get('/', async (c) => {
   try {
     let sql = `
-      SELECT p.*, c.name AS category
+      SELECT p.*, c.name AS category, CONCAT_WS(', ', s.city, s.province) AS location
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN stores s ON p.seller_id = s.id
       WHERE 1=1
     `;
     const params = [];
@@ -31,7 +32,7 @@ products.get('/', async (c) => {
     // Search by name, seller, location
     const search = c.req.query('search');
     if (search) {
-      sql += ' AND (p.name LIKE ? OR p.seller LIKE ? OR p.location LIKE ?)';
+      sql += ' AND (p.name LIKE ? OR p.seller LIKE ? OR CONCAT_WS(\', \', s.city, s.province) LIKE ?)';
       const like = `%${search}%`;
       params.push(like, like, like);
     }
@@ -57,9 +58,10 @@ products.get('/:id', async (c) => {
   try {
     const id = c.req.param('id');
     const rows = await query(
-      `SELECT p.*, c.name AS category
+      `SELECT p.*, c.name AS category, CONCAT_WS(', ', s.city, s.province) AS location
        FROM products p
        LEFT JOIN categories c ON p.category_id = c.id
+       LEFT JOIN stores s ON p.seller_id = s.id
        WHERE p.id = ?`,
       [id]
     );
@@ -77,16 +79,23 @@ products.post('/', async (c) => {
   try {
     const body = await c.req.json();
     const {
-      name, seller, price, original_price, image_url, category_id,
-      unit, description, stock, location
+      name, seller, price, original_price, image_url, image_urls, video_url, category_id,
+      unit, description, stock
     } = body;
 
+    let imageUrlsStr = null;
+    if (Array.isArray(image_urls)) {
+      imageUrlsStr = JSON.stringify(image_urls);
+    } else if (typeof image_urls === 'string') {
+      imageUrlsStr = image_urls;
+    }
+
     const result = await query(
-      `INSERT INTO products (name, seller, price, original_price, image_url, category_id,
-        unit, description, stock, location)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, seller, price, original_price || null, image_url, category_id || null,
-       unit || 'kg', description || '', stock || 100, location || '']
+      `INSERT INTO products (name, seller, price, original_price, image_url, image_urls, video_url, category_id,
+        unit, description, stock)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, seller, price, original_price || null, image_url, imageUrlsStr, video_url || null, category_id || null,
+       unit || 'kg', description || '', stock || 100]
     );
 
     return c.json({ success: true, data: { id: result.insertId } }, 201);
@@ -104,14 +113,18 @@ products.put('/:id', async (c) => {
     const params = [];
 
     const allowedFields = [
-      'name', 'seller', 'price', 'original_price', 'image_url', 'category_id',
-      'unit', 'description', 'stock', 'location'
+      'name', 'seller', 'price', 'original_price', 'image_url', 'image_urls', 'video_url', 'category_id',
+      'unit', 'description', 'stock'
     ];
 
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
         fields.push(`${field} = ?`);
-        params.push(body[field]);
+        let val = body[field];
+        if (field === 'image_urls' && Array.isArray(val)) {
+          val = JSON.stringify(val);
+        }
+        params.push(val);
       }
     }
 

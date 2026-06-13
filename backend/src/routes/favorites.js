@@ -10,10 +10,11 @@ favorites.get('/users/:userId/favorites', async (c) => {
     const rows = await query(
       `SELECT f.product_id, p.name, p.seller, p.price, p.original_price,
               p.image_url, c.name AS category, p.unit,
-              p.description, p.stock, p.location
+              p.description, p.stock, CONCAT_WS(', ', s.city, s.province) AS location
        FROM favorites f
        LEFT JOIN products p ON f.product_id = p.id
        LEFT JOIN categories c ON p.category_id = c.id
+       LEFT JOIN stores s ON p.seller_id = s.id
        WHERE f.user_id = ?`,
       [userId]
     );
