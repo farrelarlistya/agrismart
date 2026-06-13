@@ -78,6 +78,13 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+            onPressed: () => Navigator.pop(context),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 12),
           GestureDetector(
             onTap: store != null
                 ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SellerProfileScreen()))

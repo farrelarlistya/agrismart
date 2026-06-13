@@ -3,7 +3,7 @@ class ApiConstants {
   // 10.0.2.2  → hanya untuk Android Emulator
   // 192.168.x.x → IP lokal komputer, untuk HP Fisik di jaringan WiFi yang sama
   // Ganti IP di bawah jika IP WiFi Anda berubah
-  static const String baseUrl = 'http://192.168.68.143:3000';
+  static const String baseUrl = 'http://192.168.68.179:3000';
 
   // API endpoints
   static const String products = '/api/products';
@@ -18,12 +18,10 @@ class ApiConstants {
   static String url(String path) => '$baseUrl$path';
 
   /// User addresses endpoint.
-  static String userAddresses(String userId) =>
-      '/api/users/$userId/addresses';
+  static String userAddresses(String userId) => '/api/users/$userId/addresses';
 
   /// User favorites endpoint.
-  static String userFavorites(String userId) =>
-      '/api/users/$userId/favorites';
+  static String userFavorites(String userId) => '/api/users/$userId/favorites';
 
   /// Remove a specific favorite.
   static String userFavorite(String userId, String productId) =>
@@ -51,8 +49,10 @@ class ApiConstants {
   static String clearCart(String userId) => '/api/cart/user/$userId';
 
   /// Chats endpoints
-  static String chatConversations(String userId) => '/api/chats/conversations?user_id=$userId';
+  static String chatConversations(String userId) =>
+      '/api/chats/conversations?user_id=$userId';
   static const String createConversation = '/api/chats/conversations';
-  static String chatMessages(String conversationId) => '/api/chats/conversations/$conversationId/messages';
+  static String chatMessages(String conversationId) =>
+      '/api/chats/conversations/$conversationId/messages';
   static const String sendMessage = '/api/chats/messages';
 }

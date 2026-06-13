@@ -119,7 +119,6 @@ class _SellerFinanceScreenState extends State<SellerFinanceScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildAppBar(user.name),
                 _buildHeader(),
                 _buildBalanceCard(balance, storeProv.isLoading),
                 _buildTransactionHistory(transactions),
@@ -128,25 +127,6 @@ class _SellerFinanceScreenState extends State<SellerFinanceScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildAppBar(String userName) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      child: Row(
-        children: [
-          const CircleAvatar(radius: 20, backgroundColor: AppColors.greenBadge, child: Icon(Icons.storefront, size: 22, color: AppColors.primary)),
-          const SizedBox(width: 12),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Selamat Datang,', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-            Text('Halo, ${userName.isNotEmpty ? userName.split(' ').first : 'Penjual'}!',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.primary)),
-          ]),
-          const Spacer(),
-          IconButton(icon: const Icon(Icons.chat_bubble_outline, color: AppColors.primary, size: 22), onPressed: () {}),
-        ],
       ),
     );
   }

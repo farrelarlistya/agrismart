@@ -215,20 +215,30 @@ class DrawerScreen extends StatelessWidget {
                 Container(
                   width: 50,
                   height: 50,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.greenBadge,
                     shape: BoxShape.circle,
+                    image: !isGuest && userProv.user.avatarUrl != null
+                        ? DecorationImage(
+                            image: NetworkImage(userProv.user.avatarUrl!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
-                  child: Center(
-                    child: Text(
-                      !isGuest ? userProv.user.name[0].toUpperCase() : '?',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
+                  child: (!isGuest && userProv.user.avatarUrl != null)
+                      ? null
+                      : Center(
+                          child: Text(
+                            !isGuest && userProv.user.name.isNotEmpty
+                                ? userProv.user.name[0].toUpperCase()
+                                : '?',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
