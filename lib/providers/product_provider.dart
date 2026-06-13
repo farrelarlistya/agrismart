@@ -59,6 +59,92 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Upload a product image to the server.
+  Future<String?> uploadProductImage(String filePath) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final response = await _api.uploadMultipart(
+        '${ApiConstants.products}/upload',
+        fileField: 'image',
+        filePath: filePath,
+      );
+      _isLoading = false;
+      notifyListeners();
+      if (response['success'] == true) {
+        return response['url'] as String?;
+      }
+      return null;
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      debugPrint('Failed to upload product image: $e');
+      return null;
+    }
+  }
+  /// Add a new product to the database via API.
+  Future<bool> addProduct(Map<String, dynamic> data) async {
+    _isLoading = true;
+    notifyListeners();
+    bool success = false;
+    try {
+      final response = await _api.post(ApiConstants.products, body: data);
+      if (response['success'] == true) {
+        success = true;
+      } else {
+        _error = response['message'] ?? 'Gagal menambahkan produk';
+      }
+    } catch (e) {
+      _error = 'Error: $e';
+      debugPrint('Failed to add product: $e');
+    }
+    _isLoading = false;
+    notifyListeners();
+    return success;
+  }
+
+  /// Update an existing product in the database via API.
+  Future<bool> updateProduct(String id, Map<String, dynamic> data) async {
+    _isLoading = true;
+    notifyListeners();
+    bool success = false;
+    try {
+      final response = await _api.put('${ApiConstants.products}/$id', body: data);
+      if (response['success'] == true) {
+        success = true;
+      } else {
+        _error = response['message'] ?? 'Gagal memperbarui produk';
+      }
+    } catch (e) {
+      _error = 'Error: $e';
+      debugPrint('Failed to update product: $e');
+    }
+    _isLoading = false;
+    notifyListeners();
+    return success;
+  }
+
+  /// Delete an existing product from the database via API.
+  Future<bool> deleteProduct(String id) async {
+    _isLoading = true;
+    notifyListeners();
+    bool success = false;
+    try {
+      final response = await _api.delete('${ApiConstants.products}/$id');
+      if (response['success'] == true) {
+        success = true;
+      } else {
+        _error = response['message'] ?? 'Gagal menghapus produk';
+      }
+    } catch (e) {
+      _error = 'Error: $e';
+      debugPrint('Failed to delete product: $e');
+    }
+    _isLoading = false;
+    notifyListeners();
+    return success;
+  }
+
   /// Fetch categories from the API.
   Future<void> fetchCategories() async {
     try {

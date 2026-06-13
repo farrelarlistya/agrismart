@@ -1,5 +1,7 @@
 import { Hono } from 'hono';
 import { query } from '../db.js';
+import fs from 'fs/promises';
+import path from 'path';
 
 const products = new Hono();
 
@@ -74,12 +76,41 @@ products.get('/:id', async (c) => {
   }
 });
 
+// POST /api/products/upload — Upload product image
+products.post('/upload', async (c) => {
+  try {
+    const body = await c.req.parseBody();
+    const image = body['image'];
+
+    if (!image) {
+      return c.json({ success: false, message: 'No image uploaded' }, 400);
+    }
+
+    const buffer = await image.arrayBuffer();
+    const extension = image.name.split('.').pop() || 'jpg';
+    const fileName = `product-${Date.now()}.${extension}`;
+    const uploadDir = path.join(process.cwd(), 'uploads', 'products');
+
+    await fs.mkdir(uploadDir, { recursive: true });
+    const filePath = path.join(uploadDir, fileName);
+    await fs.writeFile(filePath, Buffer.from(buffer));
+
+    const host = c.req.header('host') || 'localhost:3000';
+    const imageUrl = `http://${host}/uploads/products/${fileName}`;
+
+    return c.json({ success: true, url: imageUrl });
+  } catch (error) {
+    console.error('Product upload error:', error);
+    return c.json({ success: false, message: error.message }, 500);
+  }
+});
+
 // POST /api/products — Create product
 products.post('/', async (c) => {
   try {
     const body = await c.req.json();
     const {
-      name, seller, price, original_price, image_url, image_urls, video_url, category_id,
+      name, seller, seller_id, price, original_price, image_url, image_urls, video_url, category_id,
       unit, description, stock
     } = body;
 
@@ -91,10 +122,10 @@ products.post('/', async (c) => {
     }
 
     const result = await query(
-      `INSERT INTO products (name, seller, price, original_price, image_url, image_urls, video_url, category_id,
+      `INSERT INTO products (name, seller, seller_id, price, original_price, image_url, image_urls, video_url, category_id,
         unit, description, stock)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, seller, price, original_price || null, image_url, imageUrlsStr, video_url || null, category_id || null,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, seller, seller_id || null, price, original_price || null, image_url, imageUrlsStr, video_url || null, category_id || null,
        unit || 'kg', description || '', stock || 100]
     );
 

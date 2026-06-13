@@ -65,7 +65,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
           },
         ),
       ],
-      flexibleSpace: FlexibleSpaceBar(background: Image.asset(p.imageUrl, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Container(color: AppColors.greyLight, child: Icon(Icons.eco, size: 100, color: AppColors.primary.withOpacity(0.2))))),
+      flexibleSpace: FlexibleSpaceBar(background: Image.network(p.imageUrl, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Container(color: AppColors.greyLight, child: Icon(Icons.eco, size: 100, color: AppColors.primary.withOpacity(0.2))))),
     );
   }
 

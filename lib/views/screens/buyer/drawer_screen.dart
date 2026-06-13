@@ -4,6 +4,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/auth_guard.dart';
 import '../../../providers/user_provider.dart';
 import '../../../providers/store_provider.dart';
+import '../../../providers/product_provider.dart';
 import 'profile_screen.dart';
 import 'address_screen.dart';
 import 'chat_list_screen.dart';
@@ -83,7 +84,12 @@ class DrawerScreen extends StatelessWidget {
                                         ? const SellerMainScreen()
                                         : const SellerRegisterScreen(),
                                   ),
-                                );
+                                ).then((_) {
+                                  // When coming back from Seller, ensure home shows all products
+                                  final prov = context.read<ProductProvider>();
+                                  prov.clearSellerFilter();
+                                  prov.refreshProducts();
+                                });
                               });
                             },
                             child: Container(

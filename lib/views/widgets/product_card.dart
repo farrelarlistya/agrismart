@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_constants.dart';
 import '../../models/product.dart';
 
-class ProductCard extends StatelessWidget {
+class ProductCard extends StatefulWidget {
   final Product product;
   final VoidCallback? onTap;
   final VoidCallback? onAddToCart;
@@ -19,9 +20,56 @@ class ProductCard extends StatelessWidget {
   });
 
   @override
+  State<ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<ProductCard> {
+  late PageController _pageController;
+  Timer? _timer;
+  int _currentPage = 0;
+  List<String> _allImages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _allImages = [widget.product.imageUrl, ...widget.product.imageUrls];
+    _allImages.removeWhere((url) => url.isEmpty);
+    if (_allImages.isEmpty) {
+      _allImages = [''];
+    }
+
+    if (_allImages.length > 1) {
+      _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
+        if (_currentPage < _allImages.length - 1) {
+          _currentPage++;
+        } else {
+          _currentPage = 0;
+        }
+
+        if (_pageController.hasClients) {
+          _pageController.animateToPage(
+            _currentPage,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeIn,
+          );
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final product = widget.product;
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.white,
@@ -45,29 +93,65 @@ class ProductCard extends StatelessWidget {
                     topLeft: Radius.circular(AppDimens.radiusL),
                     topRight: Radius.circular(AppDimens.radiusL),
                   ),
-                  child: Image.asset(
-                    product.imageUrl,
+                  child: SizedBox(
                     height: 110,
                     width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 110,
-                      width: double.infinity,
-                      color: AppColors.greyLight,
-                      child: Icon(
-                        Icons.eco,
-                        size: 48,
-                        color: AppColors.primary.withOpacity(0.3),
-                      ),
+                    child: PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: (int page) {
+                        setState(() {
+                          _currentPage = page;
+                        });
+                      },
+                      itemCount: _allImages.length,
+                      itemBuilder: (context, index) {
+                        return Image.network(
+                          _allImages[index],
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 110,
+                            width: double.infinity,
+                            color: AppColors.greyLight,
+                            child: Icon(
+                              Icons.eco,
+                              size: 48,
+                              color: AppColors.primary.withOpacity(0.3),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
+                // Indicator
+                if (_allImages.length > 1)
+                  Positioned(
+                    bottom: 4,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(_allImages.length, (index) {
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          height: 4,
+                          width: _currentPage == index ? 12 : 4,
+                          decoration: BoxDecoration(
+                            color: _currentPage == index ? AppColors.primary : Colors.white.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+
                 // Favorite button (top-right corner)
                 Positioned(
                   top: 6,
                   right: 6,
                   child: GestureDetector(
-                    onTap: onToggleFavorite,
+                    onTap: widget.onToggleFavorite,
                     child: Container(
                       width: 30,
                       height: 30,
@@ -83,8 +167,8 @@ class ProductCard extends StatelessWidget {
                         ],
                       ),
                       child: Icon(
-                        isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorite ? AppColors.red : AppColors.grey,
+                        widget.isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: widget.isFavorite ? AppColors.red : AppColors.grey,
                         size: 16,
                       ),
                     ),
@@ -168,7 +252,7 @@ class ProductCard extends StatelessWidget {
                           ),
                         ),
                         GestureDetector(
-                          onTap: onAddToCart,
+                          onTap: widget.onAddToCart,
                           child: Container(
                             width: 28,
                             height: 28,

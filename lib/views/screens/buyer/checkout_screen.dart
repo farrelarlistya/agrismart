@@ -93,7 +93,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         title: 'Pesanan Anda',
         trailing: Text(p.seller, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
         child: Row(children: [
-          ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset(p.imageUrl, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (_, _, _) => Container(width: 50, height: 50, decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.eco, color: AppColors.primary, size: 26)))),
+          ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(p.imageUrl, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (_, _, _) => Container(width: 50, height: 50, decoration: BoxDecoration(color: AppColors.greenBadge, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.eco, color: AppColors.primary, size: 26)))),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(p.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),

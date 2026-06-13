@@ -37,7 +37,7 @@ class _SellerProductsScreenState extends State<SellerProductsScreen> {
     // Force refresh to get seller-specific products
     final productProv = context.read<ProductProvider>();
     productProv.setSellerFilter(store.id);
-    await productProv.fetchProducts();
+    await productProv.refreshProducts();
   }
 
   @override
@@ -86,7 +86,7 @@ class _SellerProductsScreenState extends State<SellerProductsScreen> {
                           padding: const EdgeInsets.all(16),
                           itemCount: filtered.length,
                           separatorBuilder: (_, __) => const SizedBox(height: 16),
-                          itemBuilder: (_, i) => _ProductCard(product: filtered[i]),
+                          itemBuilder: (_, i) => _ProductCard(product: filtered[i], onRefresh: _loadProducts),
                         ),
                       ),
           ),
@@ -127,7 +127,8 @@ class _SellerProductsScreenState extends State<SellerProductsScreen> {
 
 class _ProductCard extends StatefulWidget {
   final Product product;
-  const _ProductCard({required this.product});
+  final VoidCallback onRefresh;
+  const _ProductCard({required this.product, required this.onRefresh});
 
   @override
   State<_ProductCard> createState() => _ProductCardState();
@@ -214,7 +215,15 @@ class _ProductCardState extends State<_ProductCard> {
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 20),
-                onPressed: () {},
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => SellerAddProductScreen(productToEdit: product)),
+                  );
+                  if (result == true) {
+                    widget.onRefresh();
+                  }
+                },
               ),
               const SizedBox(height: 24),
               SizedBox(

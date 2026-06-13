@@ -1,12 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../models/product.dart';
 import '../../../providers/product_provider.dart';
+import '../../../providers/store_provider.dart';
 import 'package:provider/provider.dart';
 
 class SellerAddProductScreen extends StatefulWidget {
-  const SellerAddProductScreen({super.key});
+  final Product? productToEdit;
+  const SellerAddProductScreen({super.key, this.productToEdit});
 
   @override
   State<SellerAddProductScreen> createState() => _SellerAddProductScreenState();
@@ -26,6 +29,22 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
   
   String _selectedCategory = 'Hasil Pertanian';
   final List<String> _categories = ['Hasil Pertanian', 'Produk Olahan', 'Sarana Produksi', 'Alat & Mesin'];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.productToEdit != null) {
+      final p = widget.productToEdit!;
+      _nameCtrl.text = p.name;
+      _descCtrl.text = p.description;
+      _priceCtrl.text = p.price.toStringAsFixed(0);
+      _stockCtrl.text = p.stock.toString();
+      _unitCtrl.text = p.unit;
+      if (_categories.contains(p.category)) {
+        _selectedCategory = p.category;
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -59,8 +78,35 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
 
   void _submit() async {
     if (_formKey.currentState!.validate()) {
-      // Create product
-      // Since we don't have a file upload API yet, we will just use local paths or empty strings
+      final storeProv = context.read<StoreProvider>();
+      final store = storeProv.store;
+      
+      if (store == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Toko tidak ditemukan')),
+        );
+        return;
+      }
+
+      final productProv = context.read<ProductProvider>();
+      String? finalImageUrl;
+
+      if (_images.isNotEmpty) {
+        final uploadedUrl = await productProv.uploadProductImage(_images.first.path);
+        if (uploadedUrl != null) {
+          finalImageUrl = uploadedUrl;
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gagal mengunggah foto produk')),
+          );
+          return;
+        }
+      }
+
+      final isEditing = widget.productToEdit != null;
+
+      // Create product json
       final productJson = {
         'name': _nameCtrl.text,
         'category_id': _categories.indexOf(_selectedCategory) + 1, // Assumes categories 1-4
@@ -68,17 +114,74 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
         'price': double.tryParse(_priceCtrl.text) ?? 0,
         'stock': int.tryParse(_stockCtrl.text) ?? 0,
         'unit': _unitCtrl.text,
-        'image_url': _images.isNotEmpty ? _images.first.path : '',
-        'image_urls': _images.length > 1 ? _images.skip(1).map((e) => e.path).toList() : [],
         'video_url': _video?.path ?? '',
+        'seller': store.name,
+        'seller_id': store.id,
       };
 
-      // Call API
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Produk berhasil ditambahkan')),
-      );
-      Navigator.pop(context, true);
+      if (finalImageUrl != null) {
+        productJson['image_url'] = finalImageUrl;
+        productJson['image_urls'] = _images.length > 1 ? _images.skip(1).map((e) => e.path).toList() : [];
+      } else if (!isEditing) {
+        productJson['image_url'] = '';
+        productJson['image_urls'] = [];
+      }
+
+      bool success;
+      if (isEditing) {
+        success = await productProv.updateProduct(widget.productToEdit!.id, productJson);
+      } else {
+        success = await productProv.addProduct(productJson);
+      }
+
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(isEditing ? 'Produk berhasil diperbarui' : 'Produk berhasil ditambahkan')),
+        );
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.read<ProductProvider>().error ?? (isEditing ? 'Gagal memperbarui produk' : 'Gagal menambahkan produk'))),
+        );
+      }
     }
+  }
+
+  void _deleteProduct() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Produk'),
+        content: const Text('Apakah Anda yakin ingin menghapus produk ini?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final success = await context.read<ProductProvider>().deleteProduct(widget.productToEdit!.id);
+              if (!mounted) return;
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Produk berhasil dihapus')),
+                );
+                Navigator.pop(context, true);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(context.read<ProductProvider>().error ?? 'Gagal menghapus produk')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
+            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildSectionTitle(String title) {
@@ -168,10 +271,17 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.primaryDark),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Tambah Produk',
-          style: TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.bold),
+        title: Text(
+          widget.productToEdit != null ? 'Edit Produk' : 'Tambah Produk',
+          style: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          if (widget.productToEdit != null)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: AppColors.red),
+              onPressed: _deleteProduct,
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Form(
@@ -195,17 +305,29 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
+                          if (_images.isEmpty && widget.productToEdit != null && widget.productToEdit!.imageUrl.isNotEmpty)
+                            Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                image: DecorationImage(
+                                  image: NetworkImage(widget.productToEdit!.imageUrl),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
                           ..._images.map((img) => Container(
                             margin: const EdgeInsets.only(right: 8),
                             width: 80,
                             height: 80,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              image: DecorationImage(
-                                // Note: In a real app we'd use FileImage(File(img.path)) but this is simple mockup
-                                image: AssetImage('assets/images/placeholder.png'),
-                                fit: BoxFit.cover,
-                              ),
+                                borderRadius: BorderRadius.circular(12),
+                                image: DecorationImage(
+                                  image: FileImage(File(img.path)),
+                                  fit: BoxFit.cover,
+                                ),
                             ),
                           )),
                           GestureDetector(
@@ -418,13 +540,19 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
           child: SizedBox(
             width: double.infinity,
             height: 50,
-            child: ElevatedButton(
-              onPressed: _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Kirim untuk ditinjau...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+            child: Consumer<ProductProvider>(
+              builder: (context, productProv, child) {
+                return ElevatedButton(
+                  onPressed: productProv.isLoading ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: productProv.isLoading
+                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : Text(widget.productToEdit != null ? 'Simpan Perubahan' : 'Kirim untuk ditinjau...', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                );
+              },
             ),
           ),
         ),

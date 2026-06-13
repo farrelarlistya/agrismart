@@ -34,7 +34,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     // Fetch products from API when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProductProvider>().fetchProducts();
+      final productProv = context.read<ProductProvider>();
+      productProv.clearSellerFilter();
+      productProv.fetchProducts();
       context.read<FavoriteProvider>().fetchFavorites();
     });
   }
