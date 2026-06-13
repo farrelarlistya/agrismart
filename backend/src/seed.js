@@ -28,7 +28,7 @@ async function seed() {
 
   // Drop tables in reverse order (foreign key constraints)
   const dropTables = [
-    'messages', 'conversations', 'cart_items', 'favorites', 'order_items', 'orders', 'products', 'stores', 'addresses', 'users', 'categories'
+    'withdrawals', 'messages', 'conversations', 'cart_items', 'favorites', 'order_items', 'orders', 'products', 'stores', 'addresses', 'users', 'categories'
   ];
   for (const table of dropTables) {
     await connection.query(`DROP TABLE IF EXISTS \`${table}\``);
@@ -77,18 +77,32 @@ async function seed() {
       user_id VARCHAR(50) NOT NULL UNIQUE,
       name VARCHAR(255) NOT NULL,
       phone VARCHAR(50) NOT NULL,
-      warehouse_name VARCHAR(255) DEFAULT NULL,
       pic_name VARCHAR(255) DEFAULT NULL,
-      pic_phone VARCHAR(50) DEFAULT NULL,
       province VARCHAR(100) DEFAULT NULL,
       city VARCHAR(100) DEFAULT NULL,
-      district VARCHAR(100) DEFAULT NULL,
       postal_code VARCHAR(20) DEFAULT NULL,
       address TEXT,
       nik VARCHAR(50) DEFAULT NULL,
       logo_url VARCHAR(500) DEFAULT NULL,
+      email VARCHAR(255) DEFAULT NULL,
+      dob VARCHAR(50) DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      is_active TINYINT(1) DEFAULT 1,
+      balance DECIMAL(12,2) DEFAULT 0.00,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Create withdrawals table
+  await connection.query(`
+    CREATE TABLE withdrawals (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      store_id VARCHAR(50) NOT NULL,
+      amount DECIMAL(12,2) NOT NULL,
+      bank_name VARCHAR(100) NOT NULL,
+      status ENUM('pending', 'success', 'failed') DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
     )
   `);
 
@@ -108,6 +122,7 @@ async function seed() {
       stock INT DEFAULT 100,
       location VARCHAR(255) DEFAULT '',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      is_active TINYINT(1) DEFAULT 1,
       FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
       FOREIGN KEY (seller_id) REFERENCES stores(id) ON DELETE CASCADE
     )
@@ -136,6 +151,7 @@ async function seed() {
       buyer_name VARCHAR(255) NOT NULL,
       address TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      resi VARCHAR(100) DEFAULT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
