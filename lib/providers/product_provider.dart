@@ -12,13 +12,30 @@ class ProductProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isInitialized = false;
   String? _error;
+  String? _sellerIdFilter;
 
   List<Product> get products => List.unmodifiable(_products);
   List<String> get categories => List.unmodifiable(_categories);
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// Fetch all products from the API.
+  /// Set a seller_id filter so the next fetchProducts only returns products for that seller.
+  void setSellerFilter(String sellerId) {
+    if (_sellerIdFilter != sellerId) {
+      _sellerIdFilter = sellerId;
+      _isInitialized = false;
+    }
+  }
+
+  /// Clear any seller filter (go back to global product list).
+  void clearSellerFilter() {
+    if (_sellerIdFilter != null) {
+      _sellerIdFilter = null;
+      _isInitialized = false;
+    }
+  }
+
+  /// Fetch all products from the API (with optional seller_id filter).
   Future<void> fetchProducts() async {
     if (_isInitialized) return;
     _isLoading = true;
@@ -26,7 +43,10 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _api.get(ApiConstants.products);
+      final endpoint = _sellerIdFilter != null
+          ? '${ApiConstants.products}?seller_id=$_sellerIdFilter'
+          : ApiConstants.products;
+      final response = await _api.get(endpoint);
       final List data = response['data'] as List? ?? [];
       _products = data.map((json) => Product.fromJson(json)).toList();
       _isInitialized = true;

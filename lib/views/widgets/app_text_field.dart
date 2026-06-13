@@ -10,6 +10,8 @@ class AppTextField extends StatefulWidget {
   final String? prefixText;
   final IconData? prefixIcon;
   final String? Function(String?)? validator;
+  final bool readOnly;
+  final VoidCallback? onTap;
 
   const AppTextField({
     super.key,
@@ -21,6 +23,8 @@ class AppTextField extends StatefulWidget {
     this.prefixText,
     this.prefixIcon,
     this.validator,
+    this.readOnly = false,
+    this.onTap,
   });
 
   @override
@@ -49,6 +53,8 @@ class _AppTextFieldState extends State<AppTextField> {
           obscureText: widget.isPassword && _obscure,
           keyboardType: widget.keyboardType,
           validator: widget.validator,
+          readOnly: widget.readOnly,
+          onTap: widget.onTap,
           style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: widget.hint,

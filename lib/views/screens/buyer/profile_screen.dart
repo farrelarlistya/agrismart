@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../providers/user_provider.dart';
 import '../../../providers/favorite_provider.dart';
+import '../../../providers/order_provider.dart';
 import '../../widgets/agrismart_app_bar.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/primary_button.dart';
@@ -59,7 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(user.email, style: const TextStyle(fontSize: 12, color: Colors.white70)),
                 const SizedBox(height: 16),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  _StatItem(label: 'Pesanan', value: '124'),
+                  _StatItem(label: 'Pesanan', value: '${context.watch<OrderProvider>().orders.length}'),
                   Container(width: 1, height: 30, color: Colors.white.withOpacity(0.3), margin: const EdgeInsets.symmetric(horizontal: 20)),
                   _StatItem(label: 'Favorit', value: '$favCount'),
                 ]),
@@ -67,7 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Data Diri section
             _buildSection(context, title: 'DATA DIRI', items: [
               _ProfileItem(label: 'Nama Lengkap', value: user.name, onEdit: () => _showEditDialog(context, 'Nama Lengkap', user.name, (v) => userProv.updateProfile(name: v))),
-              _ProfileItem(label: 'Nomor Telepon', value: user.phone, onEdit: () => _showEditDialog(context, 'Nomor Telepon', user.phone, (v) => userProv.updateProfile(phone: v))),
+              _ProfileItem(label: 'Nomor Telepon', value: user.phone.isNotEmpty ? user.phone : '-', onEdit: () => _showEditDialog(context, 'Nomor Telepon', user.phone, (v) => userProv.updateProfile(phone: v))),
               _ProfileItem(label: 'Email', value: user.email, onEdit: () => _showEditDialog(context, 'Email', user.email, (v) => userProv.updateProfile(email: v))),
             ]),
             const SizedBox(height: 8),
@@ -92,22 +93,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showEditDialog(BuildContext context, String fieldName, String currentValue, Function(String) onSave) {
+  void _showEditDialog(BuildContext context, String fieldName, String currentValue, Future<bool> Function(String) onSave) {
     final controller = TextEditingController(text: currentValue);
     showModalBottomSheet(
       context: context, isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => Padding(
+      builder: (sheetCtx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 16, right: 16, top: 20),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('Ubah $fieldName', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 16),
           AppTextField(label: fieldName, hint: 'Masukkan $fieldName baru', controller: controller),
           const SizedBox(height: 20),
-          PrimaryButton(text: 'Simpan', onPressed: () {
+          PrimaryButton(text: 'Simpan', onPressed: () async {
             if (controller.text.isNotEmpty) {
-              onSave(controller.text);
-              Navigator.pop(context);
+              Navigator.pop(sheetCtx);
+              final success = await onSave(controller.text);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(success ? '$fieldName berhasil diperbarui!' : 'Gagal memperbarui $fieldName. Coba lagi.'),
+                  backgroundColor: success ? AppColors.primary : AppColors.red,
+                ));
+              }
             }
           }),
           const SizedBox(height: 16),

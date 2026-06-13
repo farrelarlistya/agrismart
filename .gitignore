@@ -43,3 +43,26 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# -------------------------------------------------------
+# Backend (Node.js / Hono)
+# -------------------------------------------------------
+# NEVER commit node_modules — install via: npm install
+backend/node_modules/
+node_modules/
+
+# Environment variables (contains DB credentials, secrets)
+backend/.env
+.env
+
+# Uploaded files (avatars, etc.) — generated at runtime
+backend/uploads/
+
+# -------------------------------------------------------
+# Flutter auto-generated platform files (not needed in repo)
+# -------------------------------------------------------
+linux/flutter/generated_plugin_registrant.cc
+linux/flutter/generated_plugins.cmake
+macos/Flutter/GeneratedPluginRegistrant.swift
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugins.cmake

@@ -7,38 +7,31 @@ import path from 'path';
 
 const users = new Hono();
 
-// POST /api/users/:id/avatar — Upload avatar
+// POST /api/users/:id/avatar — Upload avatar (base64 JSON)
 users.post('/:id/avatar', async (c) => {
   try {
     const id = c.req.param('id');
-    const body = await c.req.parseBody();
-    const avatar = body['avatar'];
+    const { image_data, image_type } = await c.req.json();
 
-    if (!avatar || typeof avatar === 'string') {
-      return c.json({ success: false, message: 'File avatar tidak ditemukan' }, 400);
+    if (!image_data) {
+      return c.json({ success: false, message: 'Data gambar tidak ditemukan' }, 400);
     }
 
-    // Ensure the file is an image
-    if (!avatar.type.startsWith('image/')) {
-      return c.json({ success: false, message: 'File harus berupa gambar' }, 400);
-    }
-
-    // Read the file as an array buffer and convert to a Node Buffer
-    const buffer = Buffer.from(await avatar.arrayBuffer());
-
-    // Construct file name and save path
-    const extension = avatar.name.split('.').pop() || 'png';
+    // Decode base64 to binary buffer
+    const buffer = Buffer.from(image_data, 'base64');
+    const extension = (image_type || 'jpg').replace(/^\./, '');
     const fileName = `${id}-${Date.now()}.${extension}`;
     const uploadDir = path.join(process.cwd(), 'uploads', 'avatars');
-    
+
     // Ensure directory exists
     await fs.mkdir(uploadDir, { recursive: true });
 
     const filePath = path.join(uploadDir, fileName);
     await fs.writeFile(filePath, buffer);
 
-    // Generate public URL (assuming server runs on http://localhost:3000)
-    const avatarUrl = `http://10.0.2.2:3000/uploads/avatars/${fileName}`;
+    // Build URL using the request host (works for emulator and physical device)
+    const host = c.req.header('host') || 'localhost:3000';
+    const avatarUrl = `http://${host}/uploads/avatars/${fileName}`;
 
     // Update database
     await query('UPDATE users SET avatar_url = ? WHERE id = ?', [avatarUrl, id]);
@@ -48,6 +41,7 @@ users.post('/:id/avatar', async (c) => {
     return c.json({ success: true, message: 'Avatar berhasil diunggah', data: rows[0] });
 
   } catch (error) {
+    console.error('Avatar upload error:', error);
     return c.json({ success: false, message: error.message }, 500);
   }
 });

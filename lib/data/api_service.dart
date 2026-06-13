@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
 
@@ -62,14 +63,19 @@ class ApiService {
     final uri = Uri.parse(ApiConstants.url(path));
     final request = http.MultipartRequest('POST', uri);
     
-    request.headers.addAll({
-      'Accept': 'application/json',
-    });
+    // Only set Accept header; do NOT set Content-Type here — 
+    // MultipartRequest sets it automatically with the correct boundary.
+    request.headers.addAll({'Accept': 'application/json'});
 
     request.files.add(await http.MultipartFile.fromPath(fileField, filePath));
 
-    final streamedResponse = await request.send();
+    // Send with a generous timeout for image uploads
+    final streamedResponse = await request.send().timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => throw Exception('Upload timed out after 30 seconds'),
+    );
     final response = await http.Response.fromStream(streamedResponse);
+    debugPrint('[UploadMultipart] status=${response.statusCode} body=${response.body}');
     return _handleResponse(response);
   }
 

@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../data/api_service.dart';
 import '../core/constants/api_constants.dart';
@@ -110,9 +112,9 @@ class UserProvider extends ChangeNotifier {
     return false;
   }
 
-  /// Update the user profile via API.
-  Future<void> updateProfile({String? name, String? email, String? phone}) async {
-    if (_user.id.isEmpty) return;
+  /// Update the user profile via API. Returns true on success.
+  Future<bool> updateProfile({String? name, String? email, String? phone}) async {
+    if (_user.id.isEmpty) return false;
     _isLoading = true;
     notifyListeners();
 
@@ -123,37 +125,54 @@ class UserProvider extends ChangeNotifier {
       if (phone != null) body['phone'] = phone;
 
       final response = await _api.put(ApiConstants.user(_user.id), body: body);
-      _user = UserProfile.fromJson(response['data']);
-    } catch (e) {
-      debugPrint('Failed to update user: $e');
-      // Fallback to local update
-      _user = _user.copyWith(name: name, email: email, phone: phone);
-    }
-
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  /// Upload and update user avatar via API.
-  Future<bool> uploadAvatar(String imagePath) async {
-    if (_user.id.isEmpty) return false;
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      final response = await _api.uploadMultipart(
-        '${ApiConstants.users}/${_user.id}/avatar',
-        fileField: 'avatar',
-        filePath: imagePath,
-      );
-      if (response['success'] == true) {
+      if (response['success'] == true && response['data'] != null) {
         _user = UserProfile.fromJson(response['data']);
         _isLoading = false;
         notifyListeners();
         return true;
       }
     } catch (e) {
-      debugPrint('Failed to upload avatar: $e');
+      debugPrint('Failed to update user via API: $e');
+      // Optimistic local fallback so UI stays responsive
+      _user = _user.copyWith(name: name, email: email, phone: phone);
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  /// Upload and update user avatar via API (base64 JSON).
+  Future<bool> uploadAvatar(String imagePath) async {
+    if (_user.id.isEmpty) return false;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // Read the image file and encode as base64
+      final file = File(imagePath);
+      final bytes = await file.readAsBytes();
+      final base64Image = base64Encode(bytes);
+      final extension = imagePath.split('.').last.toLowerCase();
+
+      debugPrint('📤 Uploading avatar for user ${_user.id}, size=${bytes.length} bytes, ext=$extension');
+
+      final response = await _api.post(
+        '${ApiConstants.users}/${_user.id}/avatar',
+        body: {
+          'image_data': base64Image,
+          'image_type': extension,
+        },
+      );
+      if (response['success'] == true && response['data'] != null) {
+        _user = UserProfile.fromJson(response['data']);
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+      debugPrint('❌ Avatar upload: API returned success=false: $response');
+    } catch (e) {
+      debugPrint('❌ Failed to upload avatar: $e');
     }
 
     _isLoading = false;

@@ -21,6 +21,13 @@ products.get('/', async (c) => {
       params.push(category);
     }
 
+    // Filter by seller_id
+    const sellerId = c.req.query('seller_id');
+    if (sellerId) {
+      sql += ' AND p.seller_id = ?';
+      params.push(sellerId);
+    }
+
     // Search by name, seller, location
     const search = c.req.query('search');
     if (search) {

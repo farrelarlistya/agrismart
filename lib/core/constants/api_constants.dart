@@ -1,8 +1,9 @@
 /// API configuration constants for the AgriSmart backend.
 class ApiConstants {
-  // Use 10.0.2.2 for Android emulator (maps to host's localhost)
-  // Use localhost for web or physical device on same network
-  static const String baseUrl = 'http://10.0.2.2:3000';
+  // 10.0.2.2  → hanya untuk Android Emulator
+  // 192.168.x.x → IP lokal komputer, untuk HP Fisik di jaringan WiFi yang sama
+  // Ganti IP di bawah jika IP WiFi Anda berubah
+  static const String baseUrl = 'http://192.168.68.143:3000';
 
   // API endpoints
   static const String products = '/api/products';

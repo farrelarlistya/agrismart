@@ -18,9 +18,14 @@ orders.get('/', async (c) => {
     const params = [];
 
     const userId = c.req.query('user_id');
+    const sellerId = c.req.query('seller_id');
+    
     if (userId) {
       sql += ' WHERE o.user_id = ?';
       params.push(userId);
+    } else if (sellerId) {
+      sql += ' WHERE o.id IN (SELECT oi.order_id FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE p.seller_id = ?)';
+      params.push(sellerId);
     }
 
     sql += ' ORDER BY o.created_at DESC';

@@ -8,8 +8,8 @@ stores.post('/register', async (c) => {
   try {
     const body = await c.req.json();
     const { 
-      user_id, name, phone, warehouse_name, pic_name, pic_phone, 
-      province, city, district, postal_code, address, nik, logo_url
+      user_id, name, phone, pic_name, 
+      province, city, postal_code, address, nik, logo_url, email, dob
     } = body;
 
     if (!user_id || !name || !phone) {
@@ -26,13 +26,13 @@ stores.post('/register', async (c) => {
 
     await query(
       `INSERT INTO stores (
-        id, user_id, name, phone, warehouse_name, pic_name, pic_phone,
-        province, city, district, postal_code, address, nik, logo_url
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        id, user_id, name, phone, pic_name,
+        province, city, postal_code, address, nik, logo_url, email, dob
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        storeId, user_id, name, phone, warehouse_name || '', pic_name || '', pic_phone || '',
-        province || '', city || '', district || '', postal_code || '', address || '',
-        nik || '', logo_url || null
+        storeId, user_id, name, phone, pic_name || '',
+        province || '', city || '', postal_code || '', address || '',
+        nik || '', logo_url || null, email || null, dob || null
       ]
     );
 
@@ -54,10 +54,119 @@ stores.get('/me/:userId', async (c) => {
     const rows = await query('SELECT * FROM stores WHERE user_id = ?', [userId]);
     
     if (rows.length === 0) {
-      return c.json({ success: false, data: null }); // Returns null if no store
+      return c.json({ success: false, data: null });
     }
 
     return c.json({ success: true, data: rows[0] });
+  } catch (error) {
+    return c.json({ success: false, message: error.message }, 500);
+  }
+});
+
+// PUT /api/stores/:id - Update store details
+stores.put('/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const body = await c.req.json();
+    const allowedFields = ['name', 'phone', 'pic_name', 'province', 'city', 'postal_code', 'address', 'logo_url', 'email', 'is_active'];
+    const fields = [];
+    const params = [];
+
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) {
+        fields.push(`${field} = ?`);
+        params.push(body[field]);
+      }
+    }
+
+    if (fields.length === 0) {
+      return c.json({ success: false, message: 'No fields to update' }, 400);
+    }
+
+    params.push(id);
+    await query(`UPDATE stores SET ${fields.join(', ')} WHERE id = ?`, params);
+    const rows = await query('SELECT * FROM stores WHERE id = ?', [id]);
+    return c.json({ success: true, data: rows[0] });
+  } catch (error) {
+    return c.json({ success: false, message: error.message }, 500);
+  }
+});
+
+// GET /api/stores/:id/finance - Get finance history (sales + withdrawals)
+stores.get('/:id/finance', async (c) => {
+  try {
+    const storeId = c.req.param('id');
+
+    // Get store balance
+    const storeRows = await query('SELECT balance FROM stores WHERE id = ?', [storeId]);
+    if (storeRows.length === 0) return c.json({ success: false, message: 'Store not found' }, 404);
+
+    // Get order-based income (completed orders containing this store's products)
+    const incomeRows = await query(`
+      SELECT o.id, o.created_at, o.total_price,
+             (SELECT p.name FROM order_items oi2 JOIN products p ON oi2.product_id = p.id WHERE oi2.order_id = o.id AND p.seller_id = ? LIMIT 1) AS product_name
+      FROM orders o
+      WHERE o.status = 'Selesai'
+        AND o.id IN (SELECT oi.order_id FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE p.seller_id = ?)
+      ORDER BY o.created_at DESC LIMIT 20
+    `, [storeId, storeId]);
+
+    // Get withdrawal history
+    const withdrawRows = await query(
+      'SELECT * FROM withdrawals WHERE store_id = ? ORDER BY created_at DESC LIMIT 20',
+      [storeId]
+    );
+
+    // Merge and sort
+    const transactions = [
+      ...incomeRows.map(r => ({
+        type: 'income',
+        title: `Penjualan ${r.product_name || 'Produk'}`,
+        date: r.created_at,
+        amount: parseFloat(r.total_price),
+      })),
+      ...withdrawRows.map(r => ({
+        type: 'withdrawal',
+        title: `Penarikan ke Bank ${r.bank_name}`,
+        date: r.created_at,
+        amount: parseFloat(r.amount),
+      })),
+    ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    return c.json({
+      success: true,
+      data: {
+        balance: parseFloat(storeRows[0].balance),
+        transactions,
+      }
+    });
+  } catch (error) {
+    return c.json({ success: false, message: error.message }, 500);
+  }
+});
+
+// POST /api/stores/:id/withdraw - Request a withdrawal
+stores.post('/:id/withdraw', async (c) => {
+  try {
+    const storeId = c.req.param('id');
+    const { amount, bank_name } = await c.req.json();
+
+    if (!amount || !bank_name) {
+      return c.json({ success: false, message: 'Jumlah dan nama bank wajib diisi' }, 400);
+    }
+
+    const storeRows = await query('SELECT balance FROM stores WHERE id = ?', [storeId]);
+    if (storeRows.length === 0) return c.json({ success: false, message: 'Store not found' }, 404);
+
+    const balance = parseFloat(storeRows[0].balance);
+    if (amount > balance) {
+      return c.json({ success: false, message: 'Saldo tidak mencukupi' }, 400);
+    }
+
+    await query('UPDATE stores SET balance = balance - ? WHERE id = ?', [amount, storeId]);
+    await query('INSERT INTO withdrawals (store_id, amount, bank_name, status) VALUES (?, ?, ?, ?)', [storeId, amount, bank_name, 'success']);
+
+    return c.json({ success: true, message: 'Penarikan dana berhasil' });
   } catch (error) {
     return c.json({ success: false, message: error.message }, 500);
   }
