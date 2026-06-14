@@ -7,6 +7,16 @@ import path from 'path';
 
 const users = new Hono();
 
+// Utility: normalize Indonesian phone numbers so +62, 62, 0 prefix all match
+const normalizePhone = (p) => {
+  if (!p) return '';
+  let normalized = p.replace(/[\s\-]/g, ''); // remove spaces and dashes
+  if (normalized.startsWith('+62')) normalized = normalized.substring(3);
+  else if (normalized.startsWith('62')) normalized = normalized.substring(2);
+  if (normalized.startsWith('0')) normalized = normalized.substring(1);
+  return normalized;
+};
+
 // POST /api/users/:id/avatar — Upload avatar (multipart/form-data)
 users.post('/:id/avatar', async (c) => {
   try {
@@ -60,6 +70,16 @@ users.post('/register', async (c) => {
       return c.json({ success: false, message: 'Email sudah terdaftar' }, 400);
     }
 
+    // Check if phone number already exists (with normalization)
+    if (phone) {
+      const normalizedPhone = normalizePhone(phone);
+      const allUsersWithPhone = await query('SELECT phone FROM users WHERE phone IS NOT NULL AND phone != ""');
+      const phoneExists = allUsersWithPhone.some(u => normalizePhone(u.phone) === normalizedPhone);
+      if (phoneExists) {
+        return c.json({ success: false, message: 'Nomor telepon sudah terdaftar' }, 400);
+      }
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -83,19 +103,33 @@ users.post('/register', async (c) => {
   }
 });
 
-// POST /api/users/login — Login user
+// POST /api/users/login — Login user (supports email or phone number)
 users.post('/login', async (c) => {
   try {
-    const { email, password } = await c.req.json();
+    const { email, phone, password } = await c.req.json();
 
-    if (!email || !password) {
-      return c.json({ success: false, message: 'Email dan kata sandi wajib diisi' }, 400);
+    // Accept either email or phone
+    const credential = email || phone;
+    if (!credential || !password) {
+      return c.json({ success: false, message: 'Email/nomor telepon dan kata sandi wajib diisi' }, 400);
     }
 
-    // Find user by email
-    const rows = await query('SELECT * FROM users WHERE email = ?', [email]);
+    // Determine if credential is an email (contains @) or phone number
+    const isEmail = credential.includes('@');
+
+    let rows;
+    if (isEmail) {
+      rows = await query('SELECT * FROM users WHERE email = ?', [credential]);
+    } else {
+      const normalizedInput = normalizePhone(credential);
+
+      // Search all users and match by normalized phone
+      const allUsers = await query('SELECT * FROM users WHERE phone IS NOT NULL AND phone != ""');
+      rows = allUsers.filter(u => normalizePhone(u.phone) === normalizedInput);
+    }
+
     if (rows.length === 0) {
-      return c.json({ success: false, message: 'Email atau kata sandi salah' }, 401);
+      return c.json({ success: false, message: 'Email/nomor telepon atau kata sandi salah' }, 401);
     }
 
     const user = rows[0];
@@ -103,7 +137,7 @@ users.post('/login', async (c) => {
     // Verify password
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
-      return c.json({ success: false, message: 'Email atau kata sandi salah' }, 401);
+      return c.json({ success: false, message: 'Email/nomor telepon atau kata sandi salah' }, 401);
     }
 
     // Return user profile

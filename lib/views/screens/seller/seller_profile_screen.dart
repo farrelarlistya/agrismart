@@ -61,6 +61,16 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       return;
     }
     final storeProv = context.read<StoreProvider>();
+    
+    // Upload logo if there is a new one selected
+    if (_logoPath != null) {
+      final logoSuccess = await storeProv.uploadLogo(_logoPath!);
+      if (!logoSuccess && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal mengunggah foto toko')));
+        // We can choose to continue or return here. Let's continue to save the rest of the profile.
+      }
+    }
+
     final data = {
       'name': _nameController.text.trim(),
       'phone': _phoneController.text.trim(),
@@ -69,7 +79,6 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       'postal_code': _postalCodeController.text.trim(),
       'address': _addressController.text.trim(),
       'email': _emailController.text.trim(),
-      if (_logoPath != null) 'logo_url': _logoPath,
     };
 
     final success = await storeProv.updateStore(data);

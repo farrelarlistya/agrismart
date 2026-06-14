@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../models/product.dart';
 import '../../../providers/product_provider.dart';
 import '../../../providers/store_provider.dart';
@@ -19,6 +20,7 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
   final _formKey = GlobalKey<FormState>();
   
   final List<XFile> _images = [];
+  final List<String> _existingImages = [];
   XFile? _video;
   
   final _nameCtrl = TextEditingController();
@@ -43,6 +45,8 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
       if (_categories.contains(p.category)) {
         _selectedCategory = p.category;
       }
+      if (p.imageUrl.isNotEmpty) _existingImages.add(p.imageUrl);
+      if (p.imageUrls.isNotEmpty) _existingImages.addAll(p.imageUrls);
     }
   }
 
@@ -105,13 +109,22 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
         'seller_id': store.id,
       };
 
+      final List<String> finalUrls = [];
+      // Strip baseUrl from existing images to store relative paths
+      for (final fullUrl in _existingImages) {
+        if (fullUrl.startsWith(ApiConstants.baseUrl)) {
+          finalUrls.add(fullUrl.replaceFirst(ApiConstants.baseUrl, ''));
+        } else {
+          finalUrls.add(fullUrl);
+        }
+      }
+
       if (_images.isNotEmpty) {
-        // Upload ALL images to the server
-        final List<String> uploadedUrls = [];
+        // Upload ALL new images to the server
         for (final img in _images) {
           final uploadedUrl = await productProv.uploadProductImage(img.path);
           if (uploadedUrl != null) {
-            uploadedUrls.add(uploadedUrl);
+            finalUrls.add(uploadedUrl);
           } else {
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
@@ -120,11 +133,12 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
             return;
           }
         }
-        finalImageUrl = uploadedUrls.first;
-        productJson['image_url'] = finalImageUrl;
-        // Store remaining images as image_urls
-        productJson['image_urls'] = uploadedUrls.length > 1
-            ? uploadedUrls.sublist(1)
+      }
+      
+      if (finalUrls.isNotEmpty) {
+        productJson['image_url'] = finalUrls.first;
+        productJson['image_urls'] = finalUrls.length > 1
+            ? finalUrls.sublist(1)
             : [];
       } else if (!isEditing) {
         productJson['image_url'] = '';
@@ -309,32 +323,79 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          if (_images.isEmpty && widget.productToEdit != null && widget.productToEdit!.imageUrl.isNotEmpty)
-                            Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                image: DecorationImage(
-                                  image: NetworkImage(widget.productToEdit!.imageUrl),
-                                  fit: BoxFit.cover,
+                          ..._existingImages.asMap().entries.map((entry) {
+                            int idx = entry.key;
+                            String url = entry.value;
+                            return Stack(
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.only(right: 8, top: 8),
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    image: DecorationImage(
+                                      image: NetworkImage(url),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ..._images.map((img) => Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                image: DecorationImage(
-                                  image: FileImage(File(img.path)),
-                                  fit: BoxFit.cover,
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _existingImages.removeAt(idx)),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                    ),
+                                  ),
                                 ),
-                            ),
-                          )),
-                          GestureDetector(
+                              ],
+                            );
+                          }),
+                          ..._images.asMap().entries.map((entry) {
+                            int idx = entry.key;
+                            XFile img = entry.value;
+                            return Stack(
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.only(right: 8, top: 8),
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      image: DecorationImage(
+                                        image: FileImage(File(img.path)),
+                                        fit: BoxFit.cover,
+                                      ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _images.removeAt(idx)),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                          Container(
+                            margin: const EdgeInsets.only(top: 8),
+                            child: GestureDetector(
                             onTap: _pickImage,
                             child: Container(
                               width: 80,
@@ -353,6 +414,7 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
                                 ],
                               ),
                             ),
+                          ),
                           ),
                         ],
                       ),

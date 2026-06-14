@@ -9,7 +9,7 @@ const products = new Hono();
 products.get('/', async (c) => {
   try {
     let sql = `
-      SELECT p.*, c.name AS category, CONCAT_WS(', ', s.city, s.province) AS location
+      SELECT p.*, c.name AS category, CONCAT_WS(', ', s.city, s.province) AS location, s.is_active AS store_is_active
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN stores s ON p.seller_id = s.id
@@ -60,7 +60,7 @@ products.get('/:id', async (c) => {
   try {
     const id = c.req.param('id');
     const rows = await query(
-      `SELECT p.*, c.name AS category, CONCAT_WS(', ', s.city, s.province) AS location
+      `SELECT p.*, c.name AS category, CONCAT_WS(', ', s.city, s.province) AS location, s.is_active AS store_is_active
        FROM products p
        LEFT JOIN categories c ON p.category_id = c.id
        LEFT JOIN stores s ON p.seller_id = s.id

@@ -1,7 +1,47 @@
 import { Hono } from 'hono';
 import { query } from '../db.js';
+import fs from 'fs/promises';
+import path from 'path';
 
 const stores = new Hono();
+
+// POST /api/stores/:id/logo — Upload store logo (multipart/form-data)
+stores.post('/:id/logo', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const body = await c.req.parseBody();
+    const image = body['image'];
+
+    if (!image) {
+      return c.json({ success: false, message: 'Data gambar tidak ditemukan' }, 400);
+    }
+
+    const buffer = await image.arrayBuffer();
+    const extension = image.name.split('.').pop() || 'jpg';
+    const fileName = `${id}-${Date.now()}.${extension}`;
+    const uploadDir = path.join(process.cwd(), 'uploads', 'stores');
+
+    // Ensure directory exists
+    await fs.mkdir(uploadDir, { recursive: true });
+
+    const filePath = path.join(uploadDir, fileName);
+    await fs.writeFile(filePath, Buffer.from(buffer));
+
+    // Store only the relative path
+    const logoUrl = `/uploads/stores/${fileName}`;
+
+    // Update database
+    await query('UPDATE stores SET logo_url = ? WHERE id = ?', [logoUrl, id]);
+
+    // Return updated store
+    const rows = await query('SELECT * FROM stores WHERE id = ?', [id]);
+    return c.json({ success: true, message: 'Logo toko berhasil diunggah', data: rows[0] });
+
+  } catch (error) {
+    console.error('Store logo upload error:', error);
+    return c.json({ success: false, message: error.message }, 500);
+  }
+});
 
 // POST /api/stores/register - Register a new store
 stores.post('/register', async (c) => {

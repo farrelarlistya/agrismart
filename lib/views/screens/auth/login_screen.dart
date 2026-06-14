@@ -18,7 +18,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
+  final _credentialController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -26,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _credentialController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final success = await userProvider.login(
-        _emailController.text.trim(),
+        _credentialController.text.trim(),
         _passwordController.text,
       );
 
@@ -62,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Email atau kata sandi salah. Harap periksa kembali.'),
+            content: Text('Email/nomor telepon atau kata sandi salah. Harap periksa kembali.'),
             backgroundColor: AppColors.red,
           ),
         );
@@ -190,15 +190,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           // Email / Phone input
                           TextFormField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
+                            controller: _credentialController,
+                            keyboardType: TextInputType.text,
                             style: const TextStyle(
                                 fontSize: 14, color: AppColors.textPrimary),
                             validator: (v) {
                               if (v == null || v.isEmpty) {
-                                return 'Email wajib diisi';
+                                return 'Email atau nomor telepon wajib diisi';
                               }
-                              if (!v.contains('@')) return 'Email tidak valid';
+                              // Check if it looks like an email or phone
+                              final isEmail = v.contains('@');
+                              final isPhone = RegExp(r'^[0-9+]{10,15}$').hasMatch(v.replaceAll(RegExp(r'[\s\-]'), ''));
+                              if (!isEmail && !isPhone) {
+                                return 'Masukkan email yang valid atau nomor telepon (10-15 digit)';
+                              }
                               return null;
                             },
                             decoration: InputDecoration(

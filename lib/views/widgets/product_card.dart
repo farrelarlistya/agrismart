@@ -146,6 +146,36 @@ class _ProductCardState extends State<ProductCard> {
                     ),
                   ),
 
+                // Offline Overlay
+                if (!product.storeIsActive)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.4),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(AppDimens.radiusL),
+                          topRight: Radius.circular(AppDimens.radiusL),
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'Toko Libur',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
                 // Favorite button (top-right corner)
                 Positioned(
                   top: 6,
@@ -252,18 +282,24 @@ class _ProductCardState extends State<ProductCard> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: widget.onAddToCart,
+                          onTap: product.storeIsActive
+                              ? widget.onAddToCart
+                              : () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Toko sedang libur/offline')),
+                                  );
+                                },
                           child: Container(
                             width: 28,
                             height: 28,
                             decoration: BoxDecoration(
-                              color: AppColors.primary,
+                              color: product.storeIsActive ? AppColors.primary : AppColors.greyLight,
                               borderRadius:
                                   BorderRadius.circular(AppDimens.radiusS),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.add,
-                              color: Colors.white,
+                              color: product.storeIsActive ? Colors.white : AppColors.grey,
                               size: 18,
                             ),
                           ),

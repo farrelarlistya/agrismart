@@ -39,18 +39,26 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Log in a user.
-  Future<bool> login(String email, String password) async {
+  /// Log in a user. The [credential] can be an email or a phone number.
+  Future<bool> login(String credential, String password) async {
     _isLoading = true;
     notifyListeners();
 
     try {
+      // Detect whether the credential is an email or phone number
+      final bool isEmail = credential.contains('@');
+      final body = <String, dynamic>{
+        'password': password,
+      };
+      if (isEmail) {
+        body['email'] = credential;
+      } else {
+        body['phone'] = credential;
+      }
+
       final response = await _api.post(
         ApiConstants.login,
-        body: {
-          'email': email,
-          'password': password,
-        },
+        body: body,
       );
       if (response['success'] == true) {
         _user = UserProfile.fromJson(response['data']);

@@ -165,13 +165,15 @@ class _SellerRegisterScreenState extends State<SellerRegisterScreen> {
         'postal_code': _postalCodeController.text.trim(),
         'address': _addressController.text.trim(),
         'nik': _nikController.text.trim(),
-        'logo_url': _logoPath ?? '',
         'email': _emailController.text.trim(),
         'dob': _dobController.text.trim(),
       };
 
       final success = await storeProv.registerStore(data);
       if (success && mounted) {
+        if (_logoPath != null) {
+          await storeProv.uploadLogo(_logoPath!);
+        }
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SellerMainScreen())); 
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal mendaftar toko')));

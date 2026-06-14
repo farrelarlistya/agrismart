@@ -239,7 +239,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
       const SizedBox(width: 12),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(p.seller, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-        Row(children: [Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)), const SizedBox(width: 4), const Text('Penjual Aktif', style: TextStyle(fontSize: 12, color: AppColors.primary))]),
+        Row(children: [
+          Container(width: 6, height: 6, decoration: BoxDecoration(color: p.storeIsActive ? AppColors.primary : AppColors.grey, shape: BoxShape.circle)), 
+          const SizedBox(width: 4), 
+          Text(p.storeIsActive ? 'Penjual Aktif' : 'Toko Libur', style: TextStyle(fontSize: 12, color: p.storeIsActive ? AppColors.primary : AppColors.grey))
+        ]),
         if (p.location.isNotEmpty)
           Padding(padding: const EdgeInsets.only(top: 2), child: Row(children: [
             const Icon(Icons.location_on_outlined, size: 13, color: AppColors.textSecondary),
@@ -335,12 +339,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
         // Tambah ke Keranjang
         Expanded(
           child: OutlinedButton(
-            onPressed: () {
+            onPressed: p.storeIsActive ? () {
               context.read<CartProvider>().addToCart(p, quantity: _quantity);
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${p.name} (×$_quantity) ditambahkan ke keranjang'), backgroundColor: AppColors.primary, duration: const Duration(seconds: 1)));
+            } : () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Toko sedang libur/offline')));
             },
-            style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.primary), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radiusL))),
-            child: const Text('Keranjang', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+            style: OutlinedButton.styleFrom(side: BorderSide(color: p.storeIsActive ? AppColors.primary : AppColors.grey), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radiusL))),
+            child: Text('Keranjang', style: TextStyle(color: p.storeIsActive ? AppColors.primary : AppColors.grey, fontWeight: FontWeight.w600)),
           ),
         ),
         const SizedBox(width: 10),
@@ -349,11 +355,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
           flex: 2,
           child: PrimaryButton(
             text: 'Beli Sekarang →',
-            onPressed: () => AuthGuard.run(context, () {
+            backgroundColor: p.storeIsActive ? AppColors.primary : AppColors.grey,
+            onPressed: p.storeIsActive ? () => AuthGuard.run(context, () {
               Navigator.push(context, MaterialPageRoute(
                 builder: (_) => CheckoutScreen(directProduct: p, directQuantity: _quantity),
               ));
-            }),
+            }) : () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Toko sedang libur/offline')));
+            },
           ),
         ),
       ]),

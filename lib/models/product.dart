@@ -16,6 +16,7 @@ class Product {
   final int stock;
   final String location;
   final bool isFavorite;
+  final bool storeIsActive;
 
   const Product({
     required this.id,
@@ -32,6 +33,7 @@ class Product {
     this.stock = 100,
     this.location = '',
     this.isFavorite = false,
+    this.storeIsActive = true,
   });
 
   /// Creates a Product from a JSON map (API response).
@@ -66,6 +68,7 @@ class Product {
       description: json['description'] as String? ?? '',
       stock: json['stock'] != null ? int.tryParse(json['stock'].toString()) ?? 100 : 100,
       location: json['location'] as String? ?? '',
+      storeIsActive: json['store_is_active'] != null ? (json['store_is_active'] == 1 || json['store_is_active'] == true) : true,
     );
   }
 
@@ -85,6 +88,7 @@ class Product {
       'description': description,
       'stock': stock,
       'location': location,
+      'store_is_active': storeIsActive ? 1 : 0,
     };
   }
 
@@ -104,6 +108,7 @@ class Product {
     int? stock,
     String? location,
     bool? isFavorite,
+    bool? storeIsActive,
   }) {
     return Product(
       id: id ?? this.id,
@@ -120,6 +125,7 @@ class Product {
       stock: stock ?? this.stock,
       location: location ?? this.location,
       isFavorite: isFavorite ?? this.isFavorite,
+      storeIsActive: storeIsActive ?? this.storeIsActive,
     );
   }
 }

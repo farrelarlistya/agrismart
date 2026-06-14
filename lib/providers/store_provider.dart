@@ -91,6 +91,36 @@ class StoreProvider extends ChangeNotifier {
     return false;
   }
 
+  /// Upload and update store logo via API (multipart/form-data).
+  Future<bool> uploadLogo(String imagePath) async {
+    if (_store == null) return false;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      debugPrint('📤 Uploading logo for store ${_store!.id} using multipart');
+
+      final response = await _api.uploadMultipart(
+        '${ApiConstants.stores}/${_store!.id}/logo',
+        fileField: 'image',
+        filePath: imagePath,
+      );
+      if (response['success'] == true && response['data'] != null) {
+        _store = Store.fromJson(response['data']);
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+      debugPrint('❌ Logo upload: API returned success=false: $response');
+    } catch (e) {
+      debugPrint('❌ Failed to upload logo: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
   /// Toggle store active status.
   Future<void> toggleStoreActive() async {
     if (_store == null) return;
