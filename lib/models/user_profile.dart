@@ -1,3 +1,5 @@
+import '../core/constants/api_constants.dart';
+
 /// Model for a user profile.
 class UserProfile {
   final String id;
@@ -21,7 +23,7 @@ class UserProfile {
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
       phone: json['phone'] as String? ?? '',
-      avatarUrl: json['avatar_url'] as String?,
+      avatarUrl: ApiConstants.fullImageUrl(json['avatar_url'] as String?),
     );
   }
 

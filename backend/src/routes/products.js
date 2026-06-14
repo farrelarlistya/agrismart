@@ -95,8 +95,8 @@ products.post('/upload', async (c) => {
     const filePath = path.join(uploadDir, fileName);
     await fs.writeFile(filePath, Buffer.from(buffer));
 
-    const host = c.req.header('host') || 'localhost:3000';
-    const imageUrl = `http://${host}/uploads/products/${fileName}`;
+    // Store only the relative path — the client prepends its own baseUrl.
+    const imageUrl = `/uploads/products/${fileName}`;
 
     return c.json({ success: true, url: imageUrl });
   } catch (error) {

@@ -1,4 +1,5 @@
 import 'product.dart';
+import '../core/constants/api_constants.dart';
 
 /// Represents a single item in the shopping cart.
 class CartItem {
@@ -26,7 +27,7 @@ class CartItem {
         name: json['product_name'] as String? ?? '',
         seller: json['store_name'] as String? ?? 'Unknown',
         price: double.tryParse(json['price'].toString()) ?? 0,
-        imageUrl: json['image_url'] as String? ?? '',
+        imageUrl: ApiConstants.fullImageUrl(json['image_url'] as String? ?? ''),
         category: '', // not strictly needed for cart view
         unit: json['unit'] as String? ?? 'kg',
         stock: json['stock'] as int? ?? 0,

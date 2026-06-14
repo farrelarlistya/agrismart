@@ -47,7 +47,7 @@ class ChatProvider extends ChangeNotifier {
           'time': _formatTime(json['last_message_time']),
           'unread': 0,
           'productName': json['product_name'],
-          'productImage': json['product_image'],
+          'productImage': ApiConstants.fullImageUrl(json['product_image'] as String?),
           'buyerId': json['buyer_id'].toString(),
           'sellerId': json['seller_id'].toString(),
           'productId': json['product_id']?.toString(),

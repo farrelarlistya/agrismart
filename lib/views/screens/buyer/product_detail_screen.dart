@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
@@ -23,10 +24,45 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
   int _quantity = 1;
   late TabController _tabController;
 
+  // Image carousel state
+  late PageController _imagePageController;
+  Timer? _autoScrollTimer;
+  int _currentImagePage = 0;
+  List<String> _allImages = [];
+
   @override
-  void initState() { super.initState(); _tabController = TabController(length: 2, vsync: this); }
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _imagePageController = PageController();
+
+    // Combine main image + additional images
+    _allImages = [widget.product.imageUrl, ...widget.product.imageUrls];
+    _allImages.removeWhere((url) => url.isEmpty);
+    if (_allImages.isEmpty) _allImages = [''];
+
+    // Start auto-scroll if multiple images
+    if (_allImages.length > 1) {
+      _autoScrollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+        if (_imagePageController.hasClients) {
+          _currentImagePage = (_currentImagePage + 1) % _allImages.length;
+          _imagePageController.animateToPage(
+            _currentImagePage,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
+  }
+
   @override
-  void dispose() { _tabController.dispose(); super.dispose(); }
+  void dispose() {
+    _tabController.dispose();
+    _autoScrollTimer?.cancel();
+    _imagePageController.dispose();
+    super.dispose();
+  }
 
   List<Product> get _relatedProducts {
     return context.read<ProductProvider>().getRelated(widget.product);
@@ -52,20 +88,134 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
   }
 
   Widget _buildSliverAppBar(Product p) {
-    return SliverAppBar(expandedHeight: 260, pinned: true, backgroundColor: AppColors.white,
-      leading: GestureDetector(onTap: () => Navigator.pop(context), child: Container(margin: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)]), child: const Icon(Icons.arrow_back_ios_new, size: 16, color: AppColors.textPrimary))),
+    return SliverAppBar(
+      expandedHeight: 300,
+      pinned: true,
+      backgroundColor: AppColors.white,
+      leading: GestureDetector(
+        onTap: () => Navigator.pop(context),
+        child: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)],
+          ),
+          child: const Icon(Icons.arrow_back_ios_new, size: 16, color: AppColors.textPrimary),
+        ),
+      ),
       actions: [
         Consumer<FavoriteProvider>(
           builder: (context, favProv, _) {
             final isFav = favProv.isFavorite(p.id);
             return GestureDetector(
               onTap: () => AuthGuard.run(context, () => favProv.toggleFavorite(p.id)),
-              child: Container(margin: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)]), child: Padding(padding: const EdgeInsets.all(8), child: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? AppColors.red : AppColors.grey, size: 20))),
+              child: Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? AppColors.red : AppColors.grey, size: 20),
+                ),
+              ),
             );
           },
         ),
       ],
-      flexibleSpace: FlexibleSpaceBar(background: Image.network(p.imageUrl, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Container(color: AppColors.greyLight, child: Icon(Icons.eco, size: 100, color: AppColors.primary.withOpacity(0.2))))),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Image carousel
+            PageView.builder(
+              controller: _imagePageController,
+              onPageChanged: (index) {
+                setState(() => _currentImagePage = index);
+                // Reset auto-scroll timer on manual swipe
+                _autoScrollTimer?.cancel();
+                if (_allImages.length > 1) {
+                  _autoScrollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+                    if (_imagePageController.hasClients) {
+                      _currentImagePage = (_currentImagePage + 1) % _allImages.length;
+                      _imagePageController.animateToPage(
+                        _currentImagePage,
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  });
+                }
+              },
+              itemCount: _allImages.length,
+              itemBuilder: (context, index) {
+                final url = _allImages[index];
+                if (url.isEmpty) {
+                  return Container(
+                    color: AppColors.greyLight,
+                    child: Icon(Icons.eco, size: 100, color: AppColors.primary.withOpacity(0.2)),
+                  );
+                }
+                return Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: AppColors.greyLight,
+                    child: Icon(Icons.eco, size: 100, color: AppColors.primary.withOpacity(0.2)),
+                  ),
+                );
+              },
+            ),
+
+            // Dot indicators + counter badge
+            if (_allImages.length > 1)
+              Positioned(
+                bottom: 16,
+                left: 0,
+                right: 0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Counter badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${_currentImagePage + 1} / ${_allImages.length}',
+                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Dot indicators
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(_allImages.length, (index) {
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          height: 6,
+                          width: _currentImagePage == index ? 20 : 6,
+                          decoration: BoxDecoration(
+                            color: _currentImagePage == index
+                                ? AppColors.primary
+                                : Colors.white.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 

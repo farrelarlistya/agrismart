@@ -1,3 +1,5 @@
+import '../core/constants/api_constants.dart';
+
 class Store {
   final String id;
   final String userId;
@@ -47,7 +49,7 @@ class Store {
       postalCode: json['postal_code'] as String? ?? '',
       address: json['address'] as String? ?? '',
       nik: json['nik'] as String? ?? '',
-      logoUrl: json['logo_url'] as String?,
+      logoUrl: ApiConstants.fullImageUrl(json['logo_url'] as String?),
       email: json['email'] as String?,
       dob: json['dob'] as String?,
       isActive: (json['is_active'] as int? ?? 1) == 1,

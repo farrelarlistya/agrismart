@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../data/api_service.dart';
 import '../core/constants/api_constants.dart';
@@ -142,27 +140,19 @@ class UserProvider extends ChangeNotifier {
     return false;
   }
 
-  /// Upload and update user avatar via API (base64 JSON).
+  /// Upload and update user avatar via API (multipart/form-data).
   Future<bool> uploadAvatar(String imagePath) async {
     if (_user.id.isEmpty) return false;
     _isLoading = true;
     notifyListeners();
 
     try {
-      // Read the image file and encode as base64
-      final file = File(imagePath);
-      final bytes = await file.readAsBytes();
-      final base64Image = base64Encode(bytes);
-      final extension = imagePath.split('.').last.toLowerCase();
+      debugPrint('📤 Uploading avatar for user ${_user.id} using multipart');
 
-      debugPrint('📤 Uploading avatar for user ${_user.id}, size=${bytes.length} bytes, ext=$extension');
-
-      final response = await _api.post(
+      final response = await _api.uploadMultipart(
         '${ApiConstants.users}/${_user.id}/avatar',
-        body: {
-          'image_data': base64Image,
-          'image_type': extension,
-        },
+        fileField: 'image',
+        filePath: imagePath,
       );
       if (response['success'] == true && response['data'] != null) {
         _user = UserProfile.fromJson(response['data']);

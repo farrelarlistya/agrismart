@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../core/constants/api_constants.dart';
 
 class Product {
   final String id;
@@ -40,12 +41,12 @@ class Product {
       if (json['image_urls'] is String) {
         try {
           final List<dynamic> decoded = jsonDecode(json['image_urls']);
-          parsedImageUrls = decoded.map((e) => e.toString()).toList();
+          parsedImageUrls = decoded.map((e) => ApiConstants.fullImageUrl(e.toString())).toList();
         } catch (e) {
           // Ignore parsing error
         }
       } else if (json['image_urls'] is List) {
-        parsedImageUrls = (json['image_urls'] as List).map((e) => e.toString()).toList();
+        parsedImageUrls = (json['image_urls'] as List).map((e) => ApiConstants.fullImageUrl(e.toString())).toList();
       }
     }
 
@@ -57,7 +58,7 @@ class Product {
       originalPrice: json['original_price'] != null
           ? double.tryParse(json['original_price'].toString())
           : null,
-      imageUrl: json['image_url'] as String? ?? '',
+      imageUrl: ApiConstants.fullImageUrl(json['image_url'] as String? ?? ''),
       imageUrls: parsedImageUrls,
       videoUrl: json['video_url'] as String?,
       category: json['category'] as String? ?? '',

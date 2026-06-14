@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'core/constants/api_constants.dart';
 import 'providers/cart_provider.dart';
 import 'providers/favorite_provider.dart';
 import 'providers/product_provider.dart';
@@ -13,7 +14,7 @@ import 'providers/chat_provider.dart';
 import 'views/screens/buyer/main_screen.dart';
 import 'views/screens/auth/login_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -21,6 +22,10 @@ void main() {
       statusBarIconBrightness: Brightness.dark,
     ),
   );
+
+  // Auto-detect backend server IP (no more manual IP changes!)
+  await ApiConstants.init();
+
   runApp(const AgriSmartApp());
 }
 

@@ -89,27 +89,13 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
       }
 
       final productProv = context.read<ProductProvider>();
+      final isEditing = widget.productToEdit != null;
       String? finalImageUrl;
 
-      if (_images.isNotEmpty) {
-        final uploadedUrl = await productProv.uploadProductImage(_images.first.path);
-        if (uploadedUrl != null) {
-          finalImageUrl = uploadedUrl;
-        } else {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Gagal mengunggah foto produk')),
-          );
-          return;
-        }
-      }
-
-      final isEditing = widget.productToEdit != null;
-
       // Create product json
-      final productJson = {
+      final productJson = <String, dynamic>{
         'name': _nameCtrl.text,
-        'category_id': _categories.indexOf(_selectedCategory) + 1, // Assumes categories 1-4
+        'category_id': _categories.indexOf(_selectedCategory) + 1,
         'description': _descCtrl.text,
         'price': double.tryParse(_priceCtrl.text) ?? 0,
         'stock': int.tryParse(_stockCtrl.text) ?? 0,
@@ -119,9 +105,27 @@ class _SellerAddProductScreenState extends State<SellerAddProductScreen> {
         'seller_id': store.id,
       };
 
-      if (finalImageUrl != null) {
+      if (_images.isNotEmpty) {
+        // Upload ALL images to the server
+        final List<String> uploadedUrls = [];
+        for (final img in _images) {
+          final uploadedUrl = await productProv.uploadProductImage(img.path);
+          if (uploadedUrl != null) {
+            uploadedUrls.add(uploadedUrl);
+          } else {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Gagal mengunggah foto produk')),
+            );
+            return;
+          }
+        }
+        finalImageUrl = uploadedUrls.first;
         productJson['image_url'] = finalImageUrl;
-        productJson['image_urls'] = _images.length > 1 ? _images.skip(1).map((e) => e.path).toList() : [];
+        // Store remaining images as image_urls
+        productJson['image_urls'] = uploadedUrls.length > 1
+            ? uploadedUrls.sublist(1)
+            : [];
       } else if (!isEditing) {
         productJson['image_url'] = '';
         productJson['image_urls'] = [];

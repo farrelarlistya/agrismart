@@ -7,19 +7,19 @@ import path from 'path';
 
 const users = new Hono();
 
-// POST /api/users/:id/avatar — Upload avatar (base64 JSON)
+// POST /api/users/:id/avatar — Upload avatar (multipart/form-data)
 users.post('/:id/avatar', async (c) => {
   try {
     const id = c.req.param('id');
-    const { image_data, image_type } = await c.req.json();
+    const body = await c.req.parseBody();
+    const image = body['image'];
 
-    if (!image_data) {
+    if (!image) {
       return c.json({ success: false, message: 'Data gambar tidak ditemukan' }, 400);
     }
 
-    // Decode base64 to binary buffer
-    const buffer = Buffer.from(image_data, 'base64');
-    const extension = (image_type || 'jpg').replace(/^\./, '');
+    const buffer = await image.arrayBuffer();
+    const extension = image.name.split('.').pop() || 'jpg';
     const fileName = `${id}-${Date.now()}.${extension}`;
     const uploadDir = path.join(process.cwd(), 'uploads', 'avatars');
 
@@ -27,11 +27,10 @@ users.post('/:id/avatar', async (c) => {
     await fs.mkdir(uploadDir, { recursive: true });
 
     const filePath = path.join(uploadDir, fileName);
-    await fs.writeFile(filePath, buffer);
+    await fs.writeFile(filePath, Buffer.from(buffer));
 
-    // Build URL using the request host (works for emulator and physical device)
-    const host = c.req.header('host') || 'localhost:3000';
-    const avatarUrl = `http://${host}/uploads/avatars/${fileName}`;
+    // Store only the relative path — the client prepends its own baseUrl.
+    const avatarUrl = `/uploads/avatars/${fileName}`;
 
     // Update database
     await query('UPDATE users SET avatar_url = ? WHERE id = ?', [avatarUrl, id]);

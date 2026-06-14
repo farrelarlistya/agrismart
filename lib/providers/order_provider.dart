@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../core/constants/api_constants.dart';
 import '../data/api_service.dart';
 
 class OrderProvider extends ChangeNotifier {
@@ -74,7 +75,7 @@ class OrderProvider extends ChangeNotifier {
         'created_at': json['created_at'] as String? ?? '',
         'status': json['status'] as String? ?? 'Menunggu Pengiriman',
         'productName': json['product_name'] as String? ?? 'Produk',
-        'productImage': json['product_image'] as String? ?? '',
+        'productImage': ApiConstants.fullImageUrl(json['product_image'] as String? ?? ''),
         'seller': json['seller_name'] as String? ?? '',
         'buyer_name': json['buyer_name'] as String? ?? '',
         'quantity': json['total_quantity'] as int? ?? 1,
